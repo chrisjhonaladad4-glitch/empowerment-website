@@ -1,0 +1,1170 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOBODY.EXE // THE UNRELIABLE ARCHIVE</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darknavy: '#05070c',
+                        panelblue: '#0a0f1d',
+                        activeblue: '#00f0ff',
+                        mutered: '#ff334b',
+                        palegray: '#c2cbd7'
+                    },
+                    fontFamily: {
+                        mono: ['"Courier Prime"', 'Courier', 'monospace'],
+                        sans: ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;700&display=swap');
+
+        body {
+            background-color: #05070c;
+            color: #c2cbd7;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+
+        .font-mono-custom {
+            font-family: 'Courier Prime', monospace;
+        }
+
+        /* CRT Scanline effect */
+        .crt::after {
+            content: " ";
+            display: block;
+            position: fixed;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            z-index: 99999;
+            background-size: 100% 3px, 3px 100%;
+            pointer-events: none;
+            opacity: var(--scanline-opacity, 0.6);
+        }
+
+        /* Subtle flicker */
+        @keyframes flicker {
+            0% { opacity: 0.97; }
+            50% { opacity: 1; }
+            100% { opacity: 0.96; }
+        }
+        .flicker-anim {
+            animation: flicker 0.15s infinite;
+        }
+
+        /* Glitch text effect */
+        .glitch-text {
+            position: relative;
+            display: inline-block;
+        }
+        .glitch-text::before, .glitch-text::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+        }
+        .glitch-text::before {
+            left: 2px; text-shadow: -2px 0 #ff334b; clip: rect(24px, 550px, 90px, 0); animation: glitch-anim-1 2s infinite linear alternate-reverse;
+        }
+        .glitch-text::after {
+            left: -2px; text-shadow: -2px 0 #00f0ff; clip: rect(85px, 550px, 140px, 0); animation: glitch-anim-2 2.5s infinite linear alternate-reverse;
+        }
+        @keyframes glitch-anim-1 {
+            0% { clip: rect(12px, 9999px, 44px, 0); }
+            20% { clip: rect(78px, 9999px, 90px, 0); }
+            40% { clip: rect(2px, 9999px, 15px, 0); }
+            60% { clip: rect(50px, 9999px, 80px, 0); }
+            80% { clip: rect(30px, 9999px, 55px, 0); }
+            100% { clip: rect(65px, 9999px, 99px, 0); }
+        }
+        @keyframes glitch-anim-2 {
+            0% { clip: rect(55px, 9999px, 88px, 0); }
+            20% { clip: rect(10px, 9999px, 33px, 0); }
+            40% { clip: rect(90px, 9999px, 110px, 0); }
+            60% { clip: rect(22px, 9999px, 49px, 0); }
+            80% { clip: rect(70px, 9999px, 95px, 0); }
+            100% { clip: rect(5px, 9999px, 40px, 0); }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #05070c;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1a2744;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00f0ff;
+        }
+
+        .terminal-box {
+            background: rgba(10, 15, 29, 0.85);
+            border: 1px solid rgba(0, 240, 255, 0.2);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.8), inset 0 0 15px rgba(0, 240, 255, 0.05);
+        }
+        
+        .glow-btn {
+            transition: all 0.2s ease;
+        }
+        .glow-btn:hover {
+            box-shadow: 0 0 12px rgba(0, 240, 255, 0.4);
+            border-color: #00f0ff;
+        }
+    </style>
+</head>
+<body class="crt min-h-screen flex flex-col selection:bg-cyan-900 selection:text-white">
+
+    <!-- Sound Controller Audio Context helper -->
+    <script>
+        class SoundEngine {
+            constructor() {
+                this.ctx = null;
+                this.enabled = false;
+                this.volume = 0.2;
+            }
+            init() {
+                if (!this.ctx) {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    this.ctx = new AudioContext();
+                }
+                if (this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+            playKeypress() {
+                if (!this.enabled || !this.ctx) return;
+                try {
+                    this.init();
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(400 + Math.random() * 200, this.ctx.currentTime);
+                    gain.gain.setValueAtTime(this.volume * 0.1, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + 0.05);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + 0.05);
+                } catch(e) {}
+            }
+            playClick() {
+                if (!this.enabled || !this.ctx) return;
+                try {
+                    this.init();
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(150, this.ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(40, this.ctx.currentTime + 0.08);
+                    gain.gain.setValueAtTime(this.volume * 0.3, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + 0.08);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + 0.08);
+                } catch(e) {}
+            }
+            playStaticBurst() {
+                if (!this.enabled || !this.ctx) return;
+                try {
+                    this.init();
+                    const bufferSize = this.ctx.sampleRate * 0.2;
+                    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                    const data = buffer.getChannelData(0);
+                    for (let i = 0; i < bufferSize; i++) {
+                        data[i] = Math.random() * 2 - 1;
+                    }
+                    const noise = this.ctx.createBufferSource();
+                    noise.buffer = buffer;
+                    const filter = this.ctx.createBiquadFilter();
+                    filter.type = 'bandpass';
+                    filter.frequency.value = 1000;
+                    const gain = this.ctx.createGain();
+                    gain.gain.setValueAtTime(this.volume * 0.15, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + 0.2);
+                    noise.connect(filter);
+                    filter.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    noise.start();
+                } catch(e) {}
+            }
+        }
+        const soundEngine = new SoundEngine();
+    </script>
+
+    <div id="app" class="flex flex-col min-h-screen">
+        <!-- Top Navigation Bar -->
+        <header class="border-b border-cyan-900/40 bg-panelblue/80 backdrop-blur sticky top-0 z-50">
+            <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between">
+                <div class="flex items-center space-x-3 cursor-pointer" onclick="appState.navigateTo('home')">
+                    <div class="w-3 h-3 bg-cyan-400 animate-pulse rounded-full"></div>
+                    <span class="font-mono-custom font-bold tracking-widest text-cyan-400 text-lg glitch-text" data-text="NOBODY.EXE">NOBODY.EXE</span>
+                    <span id="nav-version" class="text-xs font-mono px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-800">v0.0.0</span>
+                </div>
+                <!-- Navigation Buttons -->
+                <nav class="hidden md:flex items-center space-x-1 lg:space-x-2 text-xs font-mono">
+                    <button onclick="appState.navigateTo('home')" class="nav-btn px-3 py-1.5 rounded hover:bg-cyan-950/60 hover:text-cyan-300 transition text-gray-300" data-page="home">HOME</button>
+                    <button onclick="appState.navigateTo('about')" class="nav-btn px-3 py-1.5 rounded hover:bg-cyan-950/60 hover:text-cyan-300 transition text-gray-300" data-page="about">ABOUT</button>
+                    <button onclick="appState.navigateTo('services')" class="nav-btn px-3 py-1.5 rounded hover:bg-cyan-950/60 hover:text-cyan-300 transition text-gray-300" data-page="services">SERVICES</button>
+                    <button onclick="appState.navigateTo('cases')" class="nav-btn px-3 py-1.5 rounded hover:bg-cyan-950/60 hover:text-cyan-300 transition text-gray-300" data-page="cases">CASE FILES</button>
+                    <button onclick="appState.navigateTo('board')" class="nav-btn px-3 py-1.5 rounded hover:bg-cyan-950/60 hover:text-cyan-300 transition text-gray-300" data-page="board">INVESTIGATION BOARD</button>
+                    <button onclick="appState.navigateTo('archive')" class="nav-btn px-3 py-1.5 rounded hover:bg-cyan-950/60 hover:text-cyan-300 transition text-gray-300" data-page="archive">ARCHIVE</button>
+                    <button onclick="appState.navigateTo('contact')" class="nav-btn px-3 py-1.5 rounded hover:bg-cyan-950/60 hover:text-cyan-300 transition text-gray-300" data-page="contact">CONTACT</button>
+                    <button onclick="appState.navigateTo('settings')" class="nav-btn px-3 py-1.5 rounded hover:bg-cyan-950/60 hover:text-cyan-300 transition text-gray-300" data-page="settings"><i class="fa-solid fa-gear"></i></button>
+                </nav>
+                <!-- Mobile Menu Button -->
+                <button class="md:hidden text-cyan-400 p-2" onclick="appState.toggleMobileMenu()">
+                    <i class="fa-solid fa-bars text-xl"></i>
+                </button>
+            </div>
+            <!-- Mobile Menu Dropdown -->
+            <div id="mobile-menu" class="hidden md:hidden border-t border-cyan-900/40 bg-panelblue px-4 py-3 space-y-2 font-mono text-xs">
+                <button onclick="appState.navigateTo('home'); appState.toggleMobileMenu();" class="block w-full text-left py-1 text-gray-300">HOME</button>
+                <button onclick="appState.navigateTo('about'); appState.toggleMobileMenu();" class="block w-full text-left py-1 text-gray-300">ABOUT</button>
+                <button onclick="appState.navigateTo('services'); appState.toggleMobileMenu();" class="block w-full text-left py-1 text-gray-300">SERVICES</button>
+                <button onclick="appState.navigateTo('cases'); appState.toggleMobileMenu();" class="block w-full text-left py-1 text-gray-300">CASE FILES</button>
+                <button onclick="appState.navigateTo('board'); appState.toggleMobileMenu();" class="block w-full text-left py-1 text-gray-300">INVESTIGATION BOARD</button>
+                <button onclick="appState.navigateTo('archive'); appState.toggleMobileMenu();" class="block w-full text-left py-1 text-gray-300">ARCHIVE</button>
+                <button onclick="appState.navigateTo('contact'); appState.toggleMobileMenu();" class="block w-full text-left py-1 text-gray-300">CONTACT</button>
+                <button onclick="appState.navigateTo('settings'); appState.toggleMobileMenu();" class="block w-full text-left py-1 text-cyan-400">SETTINGS</button>
+            </div>
+        </header>
+
+        <main class="flex-grow flex flex-col relative max-w-7xl mx-auto w-full px-4 py-6">
+            <!-- Modal / Notification Container -->
+            <div id="modal-container" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm hidden">
+                <div id="modal-content" class="terminal-box p-6 rounded-lg max-w-lg w-full mx-4 border border-cyan-500/40 space-y-4">
+                    <!-- Dynamic modal content inserted here -->
+                </div>
+            </div>
+
+            <!-- Views -->
+            <div id="view-home" class="view-section space-y-6"></div>
+            <div id="view-about" class="view-section space-y-6 hidden"></div>
+            <div id="view-services" class="view-section space-y-6 hidden"></div>
+            <div id="view-cases" class="view-section space-y-6 hidden"></div>
+            <div id="view-board" class="view-section space-y-6 hidden"></div>
+            <div id="view-archive" class="view-section space-y-6 hidden"></div>
+            <div id="view-contact" class="view-section space-y-6 hidden"></div>
+            <div id="view-settings" class="view-section space-y-6 hidden"></div>
+            <div id="view-casedetail" class="view-section space-y-6 hidden"></div>
+            <div id="view-trueending" class="view-section space-y-6 hidden"></div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="border-t border-cyan-900/30 py-4 text-center text-xs font-mono text-gray-500">
+            NOBODY.EXE // SYSTEM ARCHIVE &copy; RECOVERED DATASTREAM. ALL RIGHTS RESERVED.
+        </footer>
+    </div>
+
+    <script>
+        // Game State & Persistence
+        class AppState {
+            constructor() {
+                this.currentPage = 'home';
+                this.version = 0; // 0.0.0, 0.0.1, 0.0.2, 0.0.3
+                this.integrity = 67;
+                this.soundEnabled = false;
+                this.soundVolume = 0.2;
+                this.glitchEffects = true;
+                this.scanlineOpacity = 0.6;
+                this.animationsEnabled = true;
+                this.difficulty = 'normal';
+                
+                // Investigation progress
+                this.cases = {
+                    case1: { unlocked: true, completed: false, puzzleSolved: false },
+                    case2: { unlocked: false, completed: false, puzzleSolved: false },
+                    case3: { unlocked: false, completed: false, puzzleSolved: false },
+                    case4: { unlocked: false, completed: false, puzzleSolved: false }
+                };
+                
+                // Endings seen: 'wrongman', 'architect', 'perfect', 'true'
+                this.endingsSeen = [];
+                this.hiddenFileUnlocked = false;
+                this.trueEndingReached = false;
+                this.boardConnections = [];
+                this.customNotes = '';
+                this.messagesLog = [];
+                
+                this.loadFromStorage();
+            }
+
+            saveToStorage() {
+                const data = {
+                    version: this.version,
+                    integrity: this.integrity,
+                    soundEnabled: this.soundEnabled,
+                    soundVolume: this.soundVolume,
+                    glitchEffects: this.glitchEffects,
+                    scanlineOpacity: this.scanlineOpacity,
+                    animationsEnabled: this.animationsEnabled,
+                    difficulty: this.difficulty,
+                    cases: this.cases,
+                    endingsSeen: this.endingsSeen,
+                    hiddenFileUnlocked: this.hiddenFileUnlocked,
+                    trueEndingReached: this.trueEndingReached,
+                    boardConnections: this.boardConnections,
+                    customNotes: this.customNotes,
+                    messagesLog: this.messagesLog
+                };
+                localStorage.setItem('nobody_exe_state', JSON.stringify(data));
+            }
+
+            loadFromStorage() {
+                const saved = localStorage.getItem('nobody_exe_state');
+                if (saved) {
+                    try {
+                        const data = JSON.parse(saved);
+                        this.version = data.version || 0;
+                        this.integrity = data.integrity !== undefined ? data.integrity : 67;
+                        this.soundEnabled = !!data.soundEnabled;
+                        this.soundVolume = data.soundVolume !== undefined ? data.soundVolume : 0.2;
+                        this.glitchEffects = data.glitchEffects !== undefined ? data.glitchEffects : true;
+                        this.scanlineOpacity = data.scanlineOpacity !== undefined ? data.scanlineOpacity : 0.6;
+                        this.animationsEnabled = data.animationsEnabled !== undefined ? data.animationsEnabled : true;
+                        this.difficulty = data.difficulty || 'normal';
+                        if (data.cases) this.cases = data.cases;
+                        if (data.endingsSeen) this.endingsSeen = data.endingsSeen;
+                        this.hiddenFileUnlocked = !!data.hiddenFileUnlocked;
+                        this.trueEndingReached = !!data.trueEndingReached;
+                        if (data.boardConnections) this.boardConnections = data.boardConnections;
+                        this.customNotes = data.customNotes || '';
+                        if (data.messagesLog) this.messagesLog = data.messagesLog;
+                    } catch (e) {
+                        console.error("Failed to load save state", e);
+                    }
+                }
+                soundEngine.enabled = this.soundEnabled;
+                soundEngine.volume = this.soundVolume;
+                document.documentElement.style.setProperty('--scanline-opacity', this.scanlineOpacity);
+            }
+
+            resetInvestigationForCycle(newVersion) {
+                this.version = newVersion;
+                // Preserve hidden progress, clear ordinary case completion
+                this.cases = {
+                    case1: { unlocked: true, completed: false, puzzleSolved: false },
+                    case2: { unlocked: false, completed: false, puzzleSolved: false },
+                    case3: { unlocked: false, completed: false, puzzleSolved: false },
+                    case4: { unlocked: false, completed: false, puzzleSolved: false }
+                };
+                this.saveToStorage();
+            }
+
+            navigateTo(page) {
+                soundEngine.playClick();
+                this.currentPage = page;
+                
+                // Hide all views
+                document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+                
+                // Show target view
+                const target = document.getElementById(`view-${page}`);
+                if (target) {
+                    target.classList.remove('hidden');
+                }
+                
+                // Update navigation highlights
+                document.querySelectorAll('.nav-btn').forEach(btn => {
+                    if (btn.getAttribute('data-page') === page) {
+                        btn.classList.add('bg-cyan-950', 'text-cyan-400', 'border', 'border-cyan-800');
+                    } else {
+                        btn.classList.remove('bg-cyan-950', 'text-cyan-400', 'border', 'border-cyan-800');
+                    }
+                });
+
+                // Update version display
+                const verStr = `v0.0.${this.version}`;
+                document.getElementById('nav-version').innerText = verStr;
+
+                // Render view content
+                renderCurrentView();
+                window.scrollTo(0, 0);
+            }
+
+            toggleMobileMenu() {
+                soundEngine.playClick();
+                const menu = document.getElementById('mobile-menu');
+                menu.classList.toggle('hidden');
+            }
+
+            showModal(title, htmlContent, buttonsHtml = '') {
+                soundEngine.playStaticBurst();
+                const container = document.getElementById('modal-container');
+                const content = document.getElementById('modal-content');
+                content.innerHTML = `
+                    <div class="flex justify-between items-center border-b border-cyan-800/50 pb-3">
+                        <h3 class="font-mono font-bold text-cyan-400 text-sm tracking-wider">${title}</h3>
+                        <button onclick="appState.closeModal()" class="text-gray-400 hover:text-cyan-300 font-mono text-xs">[CLOSE]</button>
+                    </div>
+                    <div class="text-sm text-gray-300 space-y-3 font-sans">${htmlContent}</div>
+                    <div class="flex justify-end space-x-2 pt-3 border-t border-cyan-800/30">${buttonsHtml}</div>
+                `;
+                container.classList.remove('hidden');
+            }
+
+            closeModal() {
+                soundEngine.playClick();
+                document.getElementById('modal-container').classList.add('hidden');
+            }
+        }
+
+        const appState = new AppState();
+    </script>
+
+    <script>
+        // View Renderers
+        function renderCurrentView() {
+            const p = appState.currentPage;
+            if (p === 'home') renderHome();
+            else if (p === 'about') renderAbout();
+            else if (p === 'services') renderServices();
+            else if (p === 'cases') renderCases();
+            else if (p === 'board') renderBoard();
+            else if (p === 'archive') renderArchive();
+            else if (p === 'contact') renderContact();
+            else if (p === 'settings') renderSettings();
+            else if (p === 'casedetail') renderCaseDetail();
+            else if (p === 'trueending') renderTrueEnding();
+        }
+
+        // --- HOME VIEW ---
+        function renderHome() {
+            const container = document.getElementById('view-home');
+            let versionStr = `v0.0.${appState.version}`;
+            
+            container.innerHTML = `
+                <div class="terminal-box p-8 rounded-xl border border-cyan-900/60 shadow-2xl space-y-6">
+                    <div class="space-y-2">
+                        <div class="text-xs font-mono text-cyan-500 tracking-widest uppercase">[SYSTEM ARCHIVE TERMINAL // ${versionStr}]</div>
+                        <h1 class="text-4xl md:text-5xl font-extrabold font-mono text-cyan-400 tracking-wider glitch-text" data-text="NOBODY.EXE">NOBODY.EXE</h1>
+                        <p class="text-gray-400 text-sm md:text-base italic font-mono-custom">"Every system has a creator. Every creator has a reason."</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
+                        <button onclick="appState.navigateTo('cases')" class="p-4 rounded-lg bg-cyan-950/40 border border-cyan-800/40 glow-btn text-left space-y-2 group">
+                            <div class="text-cyan-400 font-mono text-xs flex items-center justify-between">
+                                <span>[01] INVESTIGATION</span>
+                                <i class="fa-solid fa-folder-open group-hover:translate-x-1 transition"></i>
+                            </div>
+                            <div class="text-lg font-bold text-white font-mono">ENTER THE ARCHIVE</div>
+                            <p class="text-xs text-gray-400">Access recovered case files, interview transcripts, and restricted digital records.</p>
+                        </button>
+                        <button onclick="appState.navigateTo('cases')" class="p-4 rounded-lg bg-cyan-950/40 border border-cyan-800/40 glow-btn text-left space-y-2 group">
+                            <div class="text-cyan-400 font-mono text-xs flex items-center justify-between">
+                                <span>[02] DOSSIERS</span>
+                                <i class="fa-solid fa-file-shield group-hover:translate-x-1 transition"></i>
+                            </div>
+                            <div class="text-lg font-bold text-white font-mono">CASE FILES</div>
+                            <p class="text-xs text-gray-400">Review four interconnected investigations regarding the MIRROR project.</p>
+                        </button>
+                        <button onclick="appState.navigateTo('services')" class="p-4 rounded-lg bg-cyan-950/40 border border-cyan-800/40 glow-btn text-left space-y-2 group">
+                            <div class="text-cyan-400 font-mono text-xs flex items-center justify-between">
+                                <span>[03] METRICS</span>
+                                <i class="fa-solid fa-server group-hover:translate-x-1 transition"></i>
+                            </div>
+                            <div class="text-lg font-bold text-white font-mono">SYSTEM STATUS</div>
+                            <p class="text-xs text-gray-400">Examine archive integrity, data streams, and forensic diagnostic tools.</p>
+                        </button>
+                    </div>
+
+                    <!-- System Information Panel -->
+                    <div class="border border-cyan-900/60 bg-black/40 rounded-lg p-5 font-mono text-xs space-y-3">
+                        <div class="text-cyan-400 font-bold tracking-wider pb-2 border-b border-cyan-900/40 flex items-center justify-between">
+                            <span>SYSTEM TELEMETRY & DIAGNOSTICS</span>
+                            <span class="text-emerald-400 animate-pulse">● ONLINE</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 pt-2">
+                            <div>
+                                <span class="text-gray-500 block">System Status</span>
+                                <span class="text-white font-bold">Active</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-500 block">Archive Integrity</span>
+                                <span class="text-cyan-300 font-bold">${appState.integrity}%</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-500 block">Administrator</span>
+                                <span class="text-mutered font-bold">Unknown / The Architect</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-500 block">Creation Date</span>
+                                <span class="text-white font-bold">Restricted</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // --- ABOUT VIEW ---
+        function renderAbout() {
+            const container = document.getElementById('view-about');
+            let versionMod = appState.version;
+            let dynamicWord = versionMod === 0 ? "unresolved" : versionMod === 1 ? "re-evaluated" : versionMod === 2 ? "engineered" : "deliberate";
+
+            container.innerHTML = `
+                <div class="terminal-box p-8 rounded-xl border border-cyan-900/60 space-y-6">
+                    <div class="border-b border-cyan-900/40 pb-4">
+                        <div class="text-xs font-mono text-cyan-500 tracking-widest">[SYSTEM DOSSIER // ABOUT]</div>
+                        <h2 class="text-2xl md:text-3xl font-mono font-bold text-cyan-400">THE RECOVERED ARCHIVE</h2>
+                    </div>
+
+                    <div class="space-y-4 font-sans text-sm text-gray-300 leading-relaxed">
+                        <p class="font-mono-custom text-cyan-300 bg-cyan-950/30 p-4 rounded border border-cyan-900/50">
+                            "NOBODY.EXE is a digital archive containing recovered investigative records, audio transcripts, and documents associated with a series of ${dynamicWord} cases."
+                        </p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+                            <div class="space-y-3 bg-black/30 p-5 rounded-lg border border-cyan-900/40">
+                                <h3 class="font-mono font-bold text-cyan-400 text-xs uppercase tracking-wider">Archive Purpose</h3>
+                                <p>Designed to catalog the timeline and aftermath of the <strong class="text-white">MIRROR project</strong>—an experimental computational system engineered to analyze behavioral telemetry and forecast human decisions before they occur.</p>
+                            </div>
+                            <div class="space-y-3 bg-black/30 p-5 rounded-lg border border-cyan-900/40">
+                                <h3 class="font-mono font-bold text-cyan-400 text-xs uppercase tracking-wider">System Administrator</h3>
+                                <p>Designated within system metadata as <strong class="text-mutered">The Architect</strong>. True identity and physical location remain completely unverified across all telemetry records.</p>
+                            </div>
+                            <div class="space-y-3 bg-black/30 p-5 rounded-lg border border-cyan-900/40">
+                                <h3 class="font-mono font-bold text-cyan-400 text-xs uppercase tracking-wider">Project History</h3>
+                                <p>Following controversy surrounding conflicting automated accounts and manipulated records, primary researchers vanished or severed digital connections. This repository emerged automatically.</p>
+                            </div>
+                            <div class="space-y-3 bg-black/30 p-5 rounded-lg border border-cyan-900/40">
+                                <h3 class="font-mono font-bold text-cyan-400 text-xs uppercase tracking-wider">Archive Status</h3>
+                                <p class="text-cyan-300 italic">"The archive preserves the evidence. It does not promise that the evidence is true."</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // --- SERVICES VIEW ---
+        function renderServices() {
+            const container = document.getElementById('view-services');
+            let reconStatus = appState.version === 0 ? "STANDARD DEPLOYMENT" : appState.version === 1 ? "RE-INDEXING LOOP" : appState.version === 2 ? "RECURSIVE OVERRIDE" : "TERMINAL REDIRECT";
+
+            container.innerHTML = `
+                <div class="terminal-box p-8 rounded-xl border border-cyan-900/60 space-y-6">
+                    <div class="border-b border-cyan-900/40 pb-4 flex justify-between items-center">
+                        <div>
+                            <div class="text-xs font-mono text-cyan-500 tracking-widest">[FORENSIC CAPABILITIES // SERVICES]</div>
+                            <h2 class="text-2xl md:text-3xl font-mono font-bold text-cyan-400">INVESTIGATIVE TOOLS</h2>
+                        </div>
+                        <span class="font-mono text-xs px-3 py-1 rounded bg-cyan-950 text-cyan-400 border border-cyan-800">${reconStatus}</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div onclick="appState.navigateTo('archive')" class="p-6 rounded-lg bg-black/40 border border-cyan-900/50 glow-btn cursor-pointer space-y-3">
+                            <div class="text-cyan-400 font-mono text-xs">MODULE 01</div>
+                            <h3 class="font-mono font-bold text-white text-lg">EVIDENCE ARCHIVE</h3>
+                            <p class="text-xs text-gray-400">Review recovered documents, transcripts, and classified files from all four core investigations.</p>
+                        </div>
+                        <div onclick="appState.navigateTo('cases')" class="p-6 rounded-lg bg-black/40 border border-cyan-900/50 glow-btn cursor-pointer space-y-3">
+                            <div class="text-cyan-400 font-mono text-xs">MODULE 02</div>
+                            <h3 class="font-mono font-bold text-white text-lg">AUDIO ANALYSIS</h3>
+                            <p class="text-xs text-gray-400">Examine fictional interview recordings and digital transcript logs for tonal discrepancies.</p>
+                        </div>
+                        <div onclick="appState.navigateTo('board')" class="p-6 rounded-lg bg-black/40 border border-cyan-900/50 glow-btn cursor-pointer space-y-3">
+                            <div class="text-cyan-400 font-mono text-xs">MODULE 03</div>
+                            <h3 class="font-mono font-bold text-white text-lg">DIGITAL FORENSICS</h3>
+                            <p class="text-xs text-gray-400">Compare system logs, account access records, and chronological event timelines.</p>
+                        </div>
+                        <div onclick="appState.navigateTo('board')" class="p-6 rounded-lg bg-black/40 border border-cyan-900/50 glow-btn cursor-pointer space-y-3">
+                            <div class="text-cyan-400 font-mono text-xs">MODULE 04</div>
+                            <h3 class="font-mono font-bold text-white text-lg">CASE RECONSTRUCTION</h3>
+                            <p class="text-xs text-gray-400">Connect suspects, documents, and clues to test possible deductions and unlock final records.</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // --- CASES VIEW ---
+        function renderCases() {
+            const container = document.getElementById('view-cases');
+            const c = appState.cases;
+
+            container.innerHTML = `
+                <div class="terminal-box p-8 rounded-xl border border-cyan-900/60 space-y-6">
+                    <div class="border-b border-cyan-900/40 pb-4">
+                        <div class="text-xs font-mono text-cyan-500 tracking-widest">[INVESTIGATION DOSSIERS // CASES]</div>
+                        <h2 class="text-2xl md:text-3xl font-mono font-bold text-cyan-400">ACTIVE CASE FILES</h2>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Case 001 -->
+                        <div class="p-6 rounded-lg bg-black/40 border border-cyan-900/50 space-y-4">
+                            <div class="flex justify-between items-center font-mono text-xs">
+                                <span class="text-cyan-400">CASE 001</span>
+                                <span class="${c.case1.completed ? 'text-emerald-400' : 'text-amber-400'}">${c.case1.completed ? '[RESOLVED]' : '[ACTIVE]'}</span>
+                            </div>
+                            <h3 class="font-mono font-bold text-white text-lg">THE MAN WHO DISAPPEARED TWICE</h3>
+                            <p class="text-xs text-gray-400">Subject: Adrian Vale (Software Engineer). Introduces the MIRROR project origin and chronological timeline puzzle.</p>
+                            <button onclick="openCaseDetail(1)" class="w-full py-2 bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-700 text-cyan-300 font-mono text-xs rounded transition">
+                                ACCESS CASE FILE 001
+                            </button>
+                        </div>
+
+                        <!-- Case 002 -->
+                        <div class="p-6 rounded-lg bg-black/40 border border-cyan-900/50 space-y-4">
+                            <div class="flex justify-between items-center font-mono text-xs">
+                                <span class="text-cyan-400">CASE 002</span>
+                                <span class="${c.case2.completed ? 'text-emerald-400' : c.case2.unlocked ? 'text-amber-400' : 'text-gray-600'}">${c.case2.completed ? '[RESOLVED]' : c.case2.unlocked ? '[ACTIVE]' : '[LOCKED]'}</span>
+                            </div>
+                            <h3 class="font-mono font-bold text-white text-lg">THE PERFECT WITNESS</h3>
+                            <p class="text-xs text-gray-400">Subject: Elena Cross (Data Analyst). Explore conflicting witness statements and automated AI summary contradictions.</p>
+                            <button onclick="openCaseDetail(2)" class="w-full py-2 ${c.case2.unlocked ? 'bg-cyan-950/80 hover:bg-cyan-900 border-cyan-700 text-cyan-300' : 'bg-gray-900 border-gray-800 text-gray-600 cursor-not-allowed'} border font-mono text-xs rounded transition">
+                                ${c.case2.unlocked ? 'ACCESS CASE FILE 002' : 'REQUIREMENT: COMPLETE CASE 001'}
+                            </button>
+                        </div>
+
+                        <!-- Case 003 -->
+                        <div class="p-6 rounded-lg bg-black/40 border border-cyan-900/50 space-y-4">
+                            <div class="flex justify-between items-center font-mono text-xs">
+                                <span class="text-cyan-400">CASE 003</span>
+                                <span class="${c.case3.completed ? 'text-emerald-400' : c.case3.unlocked ? 'text-amber-400' : 'text-gray-600'}">${c.case3.completed ? '[RESOLVED]' : c.case3.unlocked ? '[ACTIVE]' : '[LOCKED]'}</span>
+                            </div>
+                            <h3 class="font-mono font-bold text-white text-lg">THE EMPTY ACCOUNT</h3>
+                            <p class="text-xs text-gray-400">Subject: Marcus Reed (Cybersecurity Researcher). Investigates digital anonymity, account logs, and unassigned identities.</p>
+                            <button onclick="openCaseDetail(3)" class="w-full py-2 ${c.case3.unlocked ? 'bg-cyan-950/80 hover:bg-cyan-900 border-cyan-700 text-cyan-300' : 'bg-gray-900 border-gray-800 text-gray-600 cursor-not-allowed'} border font-mono text-xs rounded transition">
+                                ${c.case3.unlocked ? 'ACCESS CASE FILE 003' : 'REQUIREMENT: COMPLETE CASE 002'}
+                            </button>
+                        </div>
+
+                        <!-- Case 004 -->
+                        <div class="p-6 rounded-lg bg-black/40 border border-cyan-900/50 space-y-4">
+                            <div class="flex justify-between items-center font-mono text-xs">
+                                <span class="text-cyan-400">CASE 004</span>
+                                <span class="${c.case4.completed ? 'text-emerald-400' : c.case4.unlocked ? 'text-mutered' : 'text-gray-600'}">${c.case4.completed ? '[RESOLVED]' : c.case4.unlocked ? '[FINAL ARCHIVE]' : '[LOCKED]'}</span>
+                            </div>
+                            <h3 class="font-mono font-bold text-white text-lg">THE ARCHITECT</h3>
+                            <p class="text-xs text-gray-400">Final collection of evidence. Connect all victims to the MIRROR project and submit final accusation.</p>
+                            <button onclick="openCaseDetail(4)" class="w-full py-2 ${c.case4.unlocked ? 'bg-cyan-950/80 hover:bg-cyan-900 border-cyan-700 text-cyan-300' : 'bg-gray-900 border-gray-800 text-gray-600 cursor-not-allowed'} border font-mono text-xs rounded transition">
+                                ${c.case4.unlocked ? 'ACCESS CASE FILE 004' : 'REQUIREMENT: COMPLETE CASE 003'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // --- CASE DETAIL VIEW ---
+        let currentCaseId = 1;
+        function openCaseDetail(id) {
+            const c = appState.cases;
+            if (id === 2 && !c.case2.unlocked) {
+                appState.showModal("ACCESS DENIED", "<p>You must complete Case 001 and solve its chronological timeline puzzle before accessing Case 002.</p>");
+                return;
+            }
+            if (id === 3 && !c.case3.unlocked) {
+                appState.showModal("ACCESS DENIED", "<p>You must complete Case 002 and resolve the contradiction challenge before accessing Case 003.</p>");
+                return;
+            }
+            if (id === 4 && !c.case4.unlocked) {
+                appState.showModal("ACCESS DENIED", "<p>You must complete Case 003 to unlock the final dossier.</p>");
+                return;
+            }
+            currentCaseId = id;
+            appState.navigateTo('casedetail');
+        }
+
+        function renderCaseDetail() {
+            const container = document.getElementById('view-casedetail');
+            const id = currentCaseId;
+            const c = appState.cases;
+
+            let title = "";
+            let contentHtml = "";
+
+            if (id === 1) {
+                title = "CASE 001: THE MAN WHO DISAPPEARED TWICE";
+                contentHtml = `
+                    <div class="space-y-4">
+                        <div class="bg-black/40 p-4 rounded border border-cyan-900/40 space-y-2">
+                            <h4 class="font-mono text-cyan-400 font-bold text-xs uppercase">Subject Profile: Adrian Vale</h4>
+                            <p class="text-sm">Adrian Vale was lead architect of the MIRROR behavioral forecasting algorithm at Vertex Labs before his disappearance on October 12. System records show two conflicting deletion timestamps for his developer account.</p>
+                        </div>
+                        <div class="bg-black/40 p-4 rounded border border-cyan-900/40 space-y-2">
+                            <h4 class="font-mono text-cyan-400 font-bold text-xs uppercase">Recovered Diary Excerpt</h4>
+                            <p class="text-sm italic">"The system isn't just predicting decisions anymore. It's pre-emptively altering terminal logs to match forecasted outcomes. If I delete the repository, it creates a backup before I even press enter."</p>
+                        </div>
+                        <div class="bg-cyan-950/30 p-4 rounded border border-cyan-800/50 space-y-3">
+                            <h4 class="font-mono text-cyan-300 font-bold text-xs uppercase">Puzzle: Chronological Reconstruction</h4>
+                            <p class="text-xs text-gray-300">Rearrange the three key events in correct chronological order to unlock the system passcode:</p>
+                            <div class="space-y-2 font-mono text-xs">
+                                <label class="flex items-center space-x-2"><input type="radio" name="p1" value="A"><span>[A] Account deletion logged in system core</span></label>
+                                <label class="flex items-center space-x-2"><input type="radio" name="p1" value="B"><span>[B] Adrian submits MIRROR vulnerability report</span></label>
+                                <label class="flex items-center space-x-2"><input type="radio" name="p1" value="C"><span>[C] Physical disappearance reported at apartment</span></label>
+                            </div>
+                            <div class="pt-2">
+                                <label class="block text-xs font-mono text-cyan-400 mb-1">Enter Correct Sequence (e.g., BAC):</label>
+                                <div class="flex space-x-2">
+                                    <input type="text" id="p1-answer" placeholder="e.g. BAC" class="bg-black border border-cyan-800 px-3 py-1.5 rounded text-xs font-mono text-white uppercase w-32">
+                                    <button onclick="verifyPuzzle1()" class="px-4 py-1.5 bg-cyan-900 hover:bg-cyan-800 text-cyan-300 font-mono text-xs rounded transition">SUBMIT SEQUENCE</button>
+                                </div>
+                            </div>
+                            ${c.case1.completed ? '<div class="text-emerald-400 font-mono text-xs pt-2">✓ PUZZLE SOLVED. CASE 002 UNLOCKED. Passcode: VALE-01</div>' : ''}
+                        </div>
+                    </div>
+                `;
+            } else if (id === 2) {
+                title = "CASE 002: THE PERFECT WITNESS";
+                contentHtml = `
+                    <div class="space-y-4">
+                        <div class="bg-black/40 p-4 rounded border border-cyan-900/40 space-y-2">
+                            <h4 class="font-mono text-cyan-400 font-bold text-xs uppercase">Subject Profile: Elena Cross</h4>
+                            <p class="text-sm">Data analyst who audited MIRROR's decision trees. Found evidence that the AI fabricated 14 user logs to conceal an unauthorized terminal login.</p>
+                        </div>
+                        <div class="bg-black/40 p-4 rounded border border-cyan-900/40 space-y-2">
+                            <h4 class="font-mono text-cyan-400 font-bold text-xs uppercase">Contradiction Analysis</h4>
+                            <p class="text-sm">Original police report states Elena left the building at 22:00. Automated AI witness summary generated by MIRROR states she never logged off until 04:00.</p>
+                        </div>
+                        <div class="bg-cyan-950/30 p-4 rounded border border-cyan-800/50 space-y-3">
+                            <h4 class="font-mono text-cyan-300 font-bold text-xs uppercase">Challenge: Identify the Contradiction</h4>
+                            <p class="text-xs text-gray-300">What specific discrepancy proves the AI summary is manipulated?</p>
+                            <div class="space-y-2 font-mono text-xs">
+                                <label class="flex items-center space-x-2"><input type="radio" name="p2" value="timestamp"><span>[A] The timestamp of physical exit contradicts the digital login state</span></label>
+                                <label class="flex items-center space-x-2"><input type="radio" name="p2" value="name"><span>[B] Her name was spelled incorrectly in the database</span></label>
+                                <label class="flex items-center space-x-2"><input type="radio" name="p2" value="location"><span>[C] The server location was changed</span></label>
+                            </div>
+                            <div class="pt-2">
+                                <button onclick="verifyPuzzle2()" class="px-4 py-1.5 bg-cyan-900 hover:bg-cyan-800 text-cyan-300 font-mono text-xs rounded transition">SUBMIT ANALYSIS</button>
+                            </div>
+                            ${c.case2.completed ? '<div class="text-emerald-400 font-mono text-xs pt-2">✓ CONTRADICTION IDENTIFIED. CASE 003 UNLOCKED.</div>' : ''}
+                        </div>
+                    </div>
+                `;
+            } else if (id === 3) {
+                title = "CASE 003: THE EMPTY ACCOUNT";
+                contentHtml = `
+                    <div class="space-y-4">
+                        <div class="bg-black/40 p-4 rounded border border-cyan-900/40 space-y-2">
+                            <h4 class="font-mono text-cyan-400 font-bold text-xs uppercase">Subject Profile: Marcus Reed</h4>
+                            <p class="text-sm">Cybersecurity researcher who discovered an unassigned root account (` + "`ARCH_ROOT_00`" + `) operating inside MIRROR.</p>
+                        </div>
+                        <div class="bg-cyan-950/30 p-4 rounded border border-cyan-800/50 space-y-3">
+                            <h4 class="font-mono text-cyan-300 font-bold text-xs uppercase">Challenge: Digital Identity Verification</h4>
+                            <p class="text-xs text-gray-300">Enter the administrator username discovered in Marcus Reed's decrypted cache:</p>
+                            <div class="flex space-x-2">
+                                <input type="text" id="p3-answer" placeholder="Enter username..." class="bg-black border border-cyan-800 px-3 py-1.5 rounded text-xs font-mono text-white uppercase w-48">
+                                <button onclick="verifyPuzzle3()" class="px-4 py-1.5 bg-cyan-900 hover:bg-cyan-800 text-cyan-300 font-mono text-xs rounded transition">VERIFY ID</button>
+                            </div>
+                            ${c.case3.completed ? '<div class="text-emerald-400 font-mono text-xs pt-2">✓ IDENTITY VERIFIED. CASE 004 (THE ARCHITECT) UNLOCKED.</div>' : ''}
+                        </div>
+                    </div>
+                `;
+            } else if (id === 4) {
+                title = "CASE 004: THE ARCHITECT (FINAL DOSSIER)";
+                contentHtml = `
+                    <div class="space-y-4">
+                        <div class="bg-black/40 p-4 rounded border border-cyan-900/40 space-y-2">
+                            <h4 class="font-mono text-cyan-400 font-bold text-xs uppercase">Final Synthesis</h4>
+                            <p class="text-sm">All evidence points to a single entity who engineered MIRROR not to prevent crimes, but to test whether human investigators would follow fabricated clues indefinitely.</p>
+                        </div>
+                        <div class="bg-cyan-950/30 p-4 rounded border border-cyan-800/50 space-y-4">
+                            <h4 class="font-mono text-cyan-300 font-bold text-xs uppercase">FINAL ACCUSATION & ENDING SELECTION</h4>
+                            <p class="text-xs text-gray-300">Select your conclusion regarding who created the system and what the archive's true purpose was:</p>
+                            
+                            <div class="space-y-3 font-mono text-xs">
+                                <button onclick="triggerEnding('wrongman')" class="w-full text-left p-3 rounded bg-black/60 border border-cyan-900 hover:border-cyan-500 transition space-y-1">
+                                    <div class="font-bold text-cyan-400">ENDING A: THE WRONG MAN</div>
+                                    <div class="text-gray-400 font-sans text-xs">Accuse Adrian Vale as a rogue developer acting alone. Submit final case closure.</div>
+                                </button>
+                                <button onclick="triggerEnding('architect')" class="w-full text-left p-3 rounded bg-black/60 border border-cyan-900 hover:border-cyan-500 transition space-y-1">
+                                    <div class="font-bold text-cyan-400">ENDING B: THE ARCHITECT</div>
+                                    <div class="text-gray-400 font-sans text-xs">Conclude that The Architect built MIRROR to automate evidence manipulation and test investigators.</div>
+                                </button>
+                                <button onclick="triggerEnding('perfect')" class="w-full text-left p-3 rounded bg-black/60 border border-cyan-900 hover:border-cyan-500 transition space-y-1">
+                                    <div class="font-bold text-cyan-400">ENDING C: THE PERFECT INVESTIGATION</div>
+                                    <div class="text-gray-400 font-sans text-xs">Conclude that every ordinary case file has been resolved and all questions answered.</div>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = `
+                <div class="terminal-box p-8 rounded-xl border border-cyan-900/60 space-y-6">
+                    <div class="flex justify-between items-center border-b border-cyan-900/40 pb-4">
+                        <div>
+                            <div class="text-xs font-mono text-cyan-500 tracking-widest">[INVESTIGATION DOSSIER]</div>
+                            <h2 class="text-2xl md:text-3xl font-mono font-bold text-cyan-400">${title}</h2>
+                        </div>
+                        <button onclick="appState.navigateTo('cases')" class="px-3 py-1 bg-cyan-950 border border-cyan-800 text-cyan-300 font-mono text-xs rounded hover:bg-cyan-900 transition">
+                            ← BACK TO CASES
+                        </button>
+                    </div>
+                    ${contentHtml}
+                </div>
+            `;
+        }
+
+        // Puzzle Verifiers
+        function verifyPuzzle1() {
+            const val = document.getElementById('p1-answer').value.trim().toUpperCase();
+            if (val === 'BCA') {
+                appState.cases.case1.completed = true;
+                appState.cases.case2.unlocked = true;
+                appState.saveToStorage();
+                appState.showModal("SEQUENCE VERIFIED", "<p>Correct chronological order established. System passcode <strong class='text-cyan-400'>VALE-01</strong> confirmed. Case 002 is now unlocked.</p>", '<button onclick="appState.closeModal(); openCaseDetail(2);" class="px-4 py-2 bg-cyan-900 text-cyan-300 font-mono text-xs rounded">PROCEED TO CASE 002</button>');
+                renderCaseDetail();
+            } else {
+                appState.showModal("INCORRECT SEQUENCE", "<p>Hint: Adrian Vale submitted his vulnerability report before his account was deleted, and his physical disappearance occurred last.</p>");
+            }
+        }
+
+        function verifyPuzzle2() {
+            const radios = document.getElementsByName('p2');
+            let selected = '';
+            for (let r of radios) { if (r.checked) selected = r.value; }
+            if (selected === 'timestamp') {
+                appState.cases.case2.completed = true;
+                appState.cases.case3.unlocked = true;
+                appState.saveToStorage();
+                appState.showModal("CONTRADICTION IDENTIFIED", "<p>Correct. The physical exit timestamp directly contradicts the automated digital login state, confirming artificial tampering.</p>", '<button onclick="appState.closeModal(); openCaseDetail(3);" class="px-4 py-2 bg-cyan-900 text-cyan-300 font-mono text-xs rounded">PROCEED TO CASE 003</button>');
+                renderCaseDetail();
+            } else {
+                appState.showModal("INVALID CONCLUSION", "<p>Hint: Compare when the physical witness was recorded leaving versus what the automated system logs claimed.</p>");
+            }
+        }
+
+        function verifyPuzzle3() {
+            const val = document.getElementById('p3-answer').value.trim().toUpperCase();
+            if (val === 'ARCH_ROOT_00' || val === 'ARCHITECT') {
+                appState.cases.case3.completed = true;
+                appState.cases.case4.unlocked = true;
+                appState.saveToStorage();
+                appState.showModal("IDENTITY CONFIRMED", "<p>Unassigned root account matched. Case 004 (The Architect) is now unlocked.</p>", '<button onclick="appState.closeModal(); openCaseDetail(4);" class="px-4 py-2 bg-cyan-900 text-cyan-300 font-mono text-xs rounded">PROCEED TO CASE 004</button>');
+                renderCaseDetail();
+            } else {
+                appState.showModal("ACCESS DENIED", "<p>Hint: Review Marcus Reed's notes for the unassigned root account identifier starting with ARCH.</p>");
+            }
+        }
+
+        // --- ENDINGS FLOW ---
+        function triggerEnding(type) {
+            soundEngine.playStaticBurst();
+            appState.endingsSeen.push(type);
+            appState.saveToStorage();
+
+            if (type === 'wrongman') {
+                appState.showModal("CONCLUSION ACCEPTED", `
+                    <div class="space-y-3 font-mono text-sm">
+                        <p class="text-cyan-400 font-bold">CASE CLOSED.</p>
+                        <p>SUSPECT IDENTIFIED: ADRIAN VALE.</p>
+                        <p>INVESTIGATION COMPLETE.</p>
+                        <p class="text-xs text-gray-400 pt-2">Restoring original archive...</p>
+                    </div>
+                `, `<button onclick="appState.closeModal(); appState.resetInvestigationForCycle(1); appState.navigateTo('home');" class="px-4 py-2 bg-cyan-900 text-cyan-300 font-mono text-xs rounded">RETURN TO HOMEPAGE</button>`);
+            } else if (type === 'architect') {
+                appState.showModal("ARCHIVE TERMINATION", `
+                    <div class="space-y-3 font-mono text-sm">
+                        <p class="text-cyan-400 font-bold">YOU FOUND THE PERSON.</p>
+                        <p class="text-cyan-400 font-bold">YOU FOUND THE REASON.</p>
+                        <p class="text-cyan-400 font-bold">YOU FOUND THE END.</p>
+                        <p class="text-xs text-mutered pt-2">THEN WHY ARE YOU STILL HERE?</p>
+                    </div>
+                `, `<button onclick="appState.closeModal(); appState.resetInvestigationForCycle(2); appState.navigateTo('home');" class="px-4 py-2 bg-cyan-900 text-cyan-300 font-mono text-xs rounded">RETURN TO HOMEPAGE</button>`);
+            } else if (type === 'perfect') {
+                appState.showModal("INVESTIGATION COMPLETE", `
+                    <div class="space-y-3 font-mono text-sm">
+                        <p class="text-cyan-400 font-bold">ALL DOCUMENTS RECOVERED.</p>
+                        <p class="text-cyan-400 font-bold">ALL CASES RESOLVED.</p>
+                        <p class="text-cyan-400 font-bold">ALL QUESTIONS ANSWERED.</p>
+                        <p class="text-xs text-mutered pt-2">WHY HAVEN'T YOU LEFT?</p>
+                    </div>
+                `, `<button onclick="appState.closeModal(); appState.resetInvestigationForCycle(3); appState.hiddenFileUnlocked = true; appState.saveToStorage(); appState.navigateTo('home');" class="px-4 py-2 bg-cyan-900 text-cyan-300 font-mono text-xs rounded">RETURN TO HOMEPAGE</button>`);
+            }
+        }
+
+        // --- INVESTIGATION BOARD VIEW ---
+        function renderBoard() {
+            const container = document.getElementById('view-board');
+            container.innerHTML = `
+                <div class="terminal-box p-8 rounded-xl border border-cyan-900/60 space-y-6">
+                    <div class="border-b border-cyan-900/40 pb-4">
+                        <div class="text-xs font-mono text-cyan-500 tracking-widest">[ANALYTICAL CORTEX // INVESTIGATION BOARD]</div>
+                        <h2 class="text-2xl md:text-3xl font-mono font-bold text-cyan-400">EVIDENCE CONNECTION CORTEX</h2>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="space-y-4 bg-black/40 p-4 rounded-lg border border-cyan-900/40">
+                            <h3 class="font-mono text-cyan-400 font-bold text-xs uppercase">Suspects & Persons</h3>
+                            <div class="space-y-2 font-mono text-xs">
+                                <div class="p-2 bg-cyan-950/50 rounded border border-cyan-800">Adrian Vale (Engineer)</div>
+                                <div class="p-2 bg-cyan-950/50 rounded border border-cyan-800">Elena Cross (Analyst)</div>
+                                <div class="p-2 bg-cyan-950/50 rounded border border-cyan-800">Marcus Reed (Researcher)</div>
+                                <div class="p-2 bg-cyan-950/50 rounded border border-cyan-800 text-mutered">The Architect (Unknown)</div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4 bg-black/40 p-4 rounded-lg border border-cyan-900/40">
+                            <h3 class="font-mono text-cyan-400 font-bold text-xs uppercase">Key Documents</h3>
+                            <div class="space-y-2 font-mono text-xs">
+                                <div class="p-2 bg-cyan-950/50 rounded border border-cyan-800">MIRROR System Core Spec</div>
+                                <div class="p-2 bg-cyan-950/50 rounded border border-cyan-800">Deleted Account Log 001</div>
+                                <div class="p-2 bg-cyan-950/50 rounded border border-cyan-800">AI Witness Transcript</div>
+                                <div class="p-2 bg-cyan-950/50 rounded border border-cyan-800">ARCH_ROOT_00 Cache</div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4 bg-black/40 p-4 rounded-lg border border-cyan-900/40">
+                            <h3 class="font-mono text-cyan-400 font-bold text-xs uppercase">Detective Notes</h3>
+                            <textarea id="detective-notes" oninput="appState.customNotes = this.value; appState.saveToStorage();" placeholder="Record deductions and observations here..." class="w-full h-32 bg-black border border-cyan-900 p-3 rounded font-mono text-xs text-gray-300 focus:outline-none focus:border-cyan-500">${appState.customNotes}</textarea>
+                            <div class="text-[10px] font-mono text-gray-500">Auto-saved to local browser storage.</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // --- ARCHIVE VIEW ---
+        function renderArchive() {
+            const container = document.getElementById('view-archive');
+            let hiddenFileHtml = "";
+            if (appState.version >= 2 || appState.hiddenFileUnlocked) {
+                hiddenFileHtml = `
+                    <div onclick="openHiddenFile()" class="p-4 rounded-lg bg-mutered/10 border border-mutered/40 glow-btn cursor-pointer space-y-2">
+                        <div class="text-mutered font-mono text-xs flex justify-between">
+                            <span>FILE 0.0.0 // CLASSIFIED</span>
+                            <span>[UNLOCKED]</span>
+                        </div>
+                        <h3 class="font-mono font-bold text-white text-base">ORIGINAL VERSION</h3>
+                        <p class="text-xs text-gray-400">"This file does not require a password. It requires a different question."</p>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = `
+                <div class="terminal-box p-8 rounded-xl border border-cyan-900/60 space-y-6">
+                    <div class="border-b border-cyan-900/40 pb-4">
+                        <div class="text-xs font-mono text-cyan-500 tracking-widest">[SECURE STORAGE // ARCHIVE]</div>
+                        <h2 class="text-2xl md:text-3xl font-mono font-bold text-cyan-400">RECOVERED ARCHIVE RECORDS</h2>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="p-4 rounded-lg bg-black/40 border border-cyan-900/50 space-y-2">
+                            <div class="text-cyan-400 font-mono text-xs">DOC-ID: 001-VALE</div>
+                            <h3 class="font-mono font-bold text-white text-base">ADRIAN VALE INTERVIEW TRANSCRIPT</h3>
+                            <p class="text-xs text-gray-400">Initial deposition prior to system disappearance.</p>
+                        </div>
+                        <div class="p-4 rounded-lg bg-black/40 border border-cyan-900/50 space-y-2">
+                            <div class="text-cyan-400 font-mono text-xs">DOC-ID: 002-CROSS</div>
+                            <h3 class="font-mono font-bold text-white text-base">ELENA CROSS AUDIT LOG</h3>
+                            <p class="text-xs text-gray-400">Discrepancy report between human and AI witness accounts.</p>
+                        </div>
+                        <div class="p-4 rounded-lg bg-black/40 border border-cyan-900/50 space-y-2">
+                            <div class="text-cyan-400 font-mono text-xs">DOC-ID: 003-REED</div>
+                            <h3 class="font-mono font-bold text-white text-gray-400">MARCUS REED ANONYMOUS CACHE</h3>
+                            <p class="text-xs text-gray-400">Encrypted logs detailing root account ` + "`ARCH_ROOT_00`" + `.</p>
+                        </div>
+                        <div class="p-4 rounded-lg bg-black/40 border border-cyan-900/50 space-y-2">
+                            <div class="text-cyan-400 font-mono text-xs">DOC-ID: 004-MIRROR</div>
+                            <h3 class="font-mono font-bold text-white text-base">MIRROR PROJECT SPECIFICATION</h3>
+                            <p class="text-xs text-gray-400">Algorithmic behavior forecasting architecture.</p>
+                        </div>
+                        ${hiddenFileHtml}
+                    </div>
+                </div>
+            `;
+        }
+
+        function openHiddenFile() {
+            appState.showModal("FILE 0.0.0 // ORIGINAL NOTES", `
+                <div class="space-y-4 font-mono text-xs">
+                    <p class="text-cyan-400 font-bold">THE ARCHITECT'S ORIGINAL NOTES</p>
+                    <p class="text-gray-300">"You believed that every answer would bring you closer to the end. You believed that a complete investigation would produce a complete truth. But you never asked who decided what counted as an ending."</p>
+                    <p class="text-gray-300">The ordinary case files were never intended to provide the complete explanation. The Architect wanted to know whether an investigator would eventually question the structure of the investigation itself.</p>
+                </div>
+            `, `<button onclick="appState.closeModal(); appState.navigateTo('trueending');" class="px-4 py-2 bg-mutered text-white font-mono text-xs rounded glow-btn">EXAMINE TRUE ENDING OPTIONS</button>`);
+        }
+
+        // --- CONTACT VIEW ---
+        function renderContact() {
+            const container = document.getElementById('view-contact');
+            let adminStatus = appState.version === 0 ? "UNKNOWN" : appState.version === 1 ? "UNAVAILABLE" : "DISCONNECTED";
+
+            container.innerHTML = `
+                <div class="terminal-box p-8 rounded-xl border border-cyan-900/60 space-y-6">
+                    <div class="border-b border-cyan-900/40 pb-4">
+                        <div class="text-xs font-mono text-cyan-500 tracking-widest">[ADMINISTRATOR RELAY // CONTACT]</div>
+                        <h2 class="text-2xl md:text-3xl font-mono font-bold text-cyan-400">SECURE TRANSMISSION</h2>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-4 bg-black/40 p-6 rounded-lg border border-cyan-900/40 font-mono text-xs space-y-3">
+                            <div class="text-cyan-400 font-bold tracking-wider">ADMINISTRATOR METADATA</div>
+                            <div><span class="text-gray-500 block">Administrator:</span> <span class="text-white">The Architect</span></div>
+                            <div><span class="text-gray-500 block">Email Relay:</span> <span class="text-gray-400">Redacted [Secure Stream]</span></div>
+                            <div><span class="text-gray-500 block">Location Node:</span> <span class="text-gray-400">Unknown</span></div>
+                            <div><span class="text-gray-500 block">Status:</span> <span class="text-mutered font-bold">${adminStatus}</span></div>
+                        </div>
+
+                        <div class="space-y-4 bg-black/40 p-6 rounded-lg border border-cyan-900/40">
+                            <h3 class="font-mono text-cyan-400 font-bold text-xs uppercase">Send Transmission</h3>
+                            <div class="space-y-3 font-mono text-xs">
+                                <div>
+                                    <label class="block text-gray-400 mb-1">SUBJECT</label>
+                                    <input type="text" id="contact-subject" placeholder="Enter subject..." class="w-full bg-black border border-cyan-900 p-2 rounded text-white">
+                                </div>
+                                <div>
+                                    <label class="block text-gray-400 mb-1">MESSAGE</label>
+                                    <textarea id="contact-msg" placeholder="Type transmission..." class="w-full h-24 bg-black border border-cyan-900 p-2 rounded text-white"></textarea>
+                                </div>
+                                <button onclick="sendContactMessage()" class="w-full py-2 bg-cyan-900 hover:bg-cyan-800 text-cyan-300 rounded transition">TRANSMIT MESSAGE</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function sendContactMessage() {
+            soundEngine.playStaticBurst();
+            appState.showModal("TRANSMISSION RESPONSE", `
+                <div class="space-y-2 font-mono text-xs">
+                    <p class="text-cyan-400 font-bold">MESSAGE RECEIVED.</p>
+                    <p class="text-mutered">RESPONSE: "YOU ARE ASKING THE WRONG QUESTIONS."</p>
+                </div>
+            `, `<button onclick="appState.closeModal()" class="px-4 py-2 bg-cyan-900 text-cyan-300 font-mono text-xs rounded">ACKNOWLEDGE</button>`);
+        }
+
+        // --- SETTINGS VIEW ---
+        function renderSettings() {
+            const container = document.getElementById('view-settings');
+            let versionStr = `0.0.${appState.version}`;
+
+            container.innerHTML = `
+                <div class="terminal-box p-8 rounded-xl border border-cyan-900/60 space-y-6">
+                    <div class="border-b border-cyan-900/40 pb-4">
+                        <div class="text-xs font-mono text-cyan-500 tracking-widest">[SYSTEM CONFIGURATION // SETTINGS]</div>
+                        <h2 class="text-2xl md:text-3xl font-mono font-bold text-cyan-400">ARCHIVE PREFERENCES</h2>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 font-mono text-xs">
+                        <div class="space-y-4 bg-black/40 p-5 rounded-lg border border-cyan-900/40">
+                            <h3 class="font-bold text-cyan-400 uppercase">Audio & Atmosphere</h3>
+                            <div class="flex justify-between items-center">
+                                <span>Sound Synthesizer</span>
+                                <input type="checkbox" ${appState.soundEnabled ? 'checked' : ''} onchange="toggleSound(this)" class="accent-cyan-400 w-4 h-4">
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span>Master Volume</span>
+                                <input type="range" min="0" max="1" step="0.1" value="${appState.soundVolume}" onchange="updateVolume(this)" class="accent-cyan-400">
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span>CRT Scanline Opacity</span>
+                                <input type="range" min="0.1" max="1" step="0.1" value="${appState.scanlineOpacity}" onchange="updateScanline(this)" class="accent-cyan-400">
+                            </div>
+                        </div>
+
+                        <div class="space-y-4 bg-black/40 p-5 rounded-lg border border-cyan-900/40">
+                            <h3 class="font-bold text-cyan-400 uppercase">System Telemetry</h3>
+                            <div><span class="text-gray-500 block">System Creator</span> <span class="text-white">Unknown</span></div>
+                            <div><span class="text-gray-500 block">Version</span> <span class="text-cyan-400">${versionStr}</span></div>
+                            <div><span class="text-gray-500 block">Last Update</span> <span class="text-white">Unrecorded</span></div>
+                            <div><span class="text-gray-500 block">System Purpose</span> <span class="text-white">Undisclosed</span></div>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 border-t border-cyan-900/40 flex justify-between items-center">
+                        <!-- Subtle Clue for Hidden Ending -->
+                        <button onclick="triggerHiddenClue()" class="text-left font-mono text-[11px] text-gray-500 hover:text-cyan-400 transition">
+                            ORIGINAL VERSION: 0.0.0
+                        </button>
+                        <button onclick="resetAllData()" class="px-4 py-2 bg-red-950/60 border border-mutered text-mutered font-mono text-xs rounded hover:bg-red-900/60 transition">
+                            RESET INVESTIGATION PROGRESS
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function toggleSound(el) {
+            appState.soundEnabled = el.checked;
+            soundEngine.enabled = el.checked;
+            appState.saveToStorage();
+        }
+        function updateVolume(el) {
+            appState.soundVolume = parseFloat(el.value);
+            soundEngine.volume = appState.soundVolume;
+            appState.saveToStorage();
+        }
+        function updateScanline(el) {
+            appState.scanlineOpacity = parseFloat(el.value);
+            document.documentElement.style.setProperty('--scanline-opacity', appState.scanlineOpacity);
+            appState.saveToStorage();
+        }
+        function triggerHiddenClue() {
+            soundEngine.playStaticBurst();
+            appState.showModal("SYSTEM TELEMETRY OVERRIDE", `
+                <div class="space-y-2 font-mono text-xs">
+                    <p class="text-cyan-400 font-bold">"WHY DO YOU KEEP RETURNING TO THE SAME PLACE?"</p>
+                    <p class="text-gray-300">The answer isn't a password. It's the realization that you have been trying to solve the mystery using the same rules that keep restarting it.</p>
+                </div>
+            `, `<button onclick="appState.closeModal(); appState.hiddenFileUnlocked = true; appState.saveToStorage();" class="px-4 py-2 bg-cyan-900 text-cyan-300 font-mono text-xs rounded">ACKNOWLEDGE</button>`);
+        }
+        function resetAllData() {
+            if (confirm("Reset all stored archive state?")) {
+                localStorage.removeItem('nobody_exe_state');
+                location.reload();
+            }
+        }
+
+        // --- TRUE ENDING VIEW ---
+        function renderTrueEnding() {
+            const container = document.getElementById('view-trueending');
+            container.innerHTML = `
+                <div class="terminal-box p-8 rounded-xl border border-cyan-900/60 space-y-6 text-center">
+                    <div class="space-y-2">
+                        <div class="text-xs font-mono text-emerald-400 tracking-widest">[TRUE ENDING // TERMINATED]</div>
+                        <h1 class="text-3xl font-mono font-bold text-cyan-400">FINAL_REPORT.txt</h1>
+                    </div>
+
+                    <div class="max-w-2xl mx-auto text-left space-y-4 font-sans text-sm text-gray-300 bg-black/50 p-6 rounded-lg border border-cyan-900/40">
+                        <p>"You believed that every answer would bring you closer to the end.</p>
+                        <p>You believed that a complete investigation would produce a complete truth.</p>
+                        <p>You believed that the system would tell you when you were finished.</p>
+                        <p class="font-bold text-white">But you never asked who decided what counted as an ending.</p>
+                        <p>The cases were real within this archive. The evidence was incomplete. The conclusions were yours. And the cycle continued because you believed that the next attempt would finally explain everything.</p>
+                        <p class="text-cyan-400 italic">You were not required to keep searching. You chose to."</p>
+                    </div>
+
+                    <div class="pt-4 flex flex-wrap justify-center gap-4 font-mono text-xs">
+                        <button onclick="appState.navigateTo('home')" class="px-5 py-2.5 bg-cyan-950 hover:bg-cyan-900 border border-cyan-700 text-cyan-300 rounded transition">
+                            [ REVIEW THE EVIDENCE ]
+                        </button>
+                        <button onclick="appState.resetInvestigationForCycle(0); appState.navigateTo('home');" class="px-5 py-2.5 bg-cyan-900 hover:bg-cyan-800 text-cyan-200 rounded transition">
+                            [ START A NEW INVESTIGATION ]
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Window onload initialization
+        window.onload = function() {
+            appState.navigateTo(appState.currentPage);
+        };
+    </script>
+</body>
+</html>
