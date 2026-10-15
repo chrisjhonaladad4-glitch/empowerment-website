@@ -1,0 +1,1620 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FREEDOM ARC - Express, Listen, Unburden</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts for Magazine Cut-out & Corkboard Feel -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Impact&family=Permanent+Marker&family=Playfair+Display:ital,wght@0,700;1,400&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Space Grotesk', 'sans-serif'],
+            mono: ['Courier Prime', 'monospace'],
+            marker: ['Permanent Marker', 'cursive'],
+            handwriting: ['Caveat', 'cursive'],
+            serif: ['Playfair Display', 'serif']
+          },
+          animation: {
+            'spin-slow': 'spin 12s linear infinite',
+            'float': 'float 4s ease-in-out infinite',
+            'pulse-slow': 'pulse 3s infinite',
+          },
+          keyframes: {
+            float: {
+              '0%, 100%': { transform: 'translateY(0px)' },
+              '50%': { transform: 'translateY(-8px)' },
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.1);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 4px;
+    }
+
+    /* Cutout Lettering Styling Generator */
+    .cutout-wrapper {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+      max-width: 100%;
+      word-break: normal;
+      overflow-wrap: break-word;
+    }
+    .cutout-word {
+      display: inline-flex;
+      flex-wrap: nowrap;
+      gap: 3px;
+      margin-right: 6px;
+      margin-y: 2px;
+      white-space: nowrap;
+    }
+    .cutout-char {
+      display: inline-block;
+      padding: 2px 6px;
+      font-weight: 900;
+      text-transform: uppercase;
+      box-shadow: 2px 3px 0px rgba(0,0,0,0.8);
+      user-select: none;
+      transition: transform 0.2s ease;
+    }
+    .cutout-char:hover {
+      transform: scale(1.15) rotate(0deg) !important;
+      z-index: 10;
+    }
+
+    /* Vinyl Grooves Effect */
+    .vinyl-grooves {
+      background: repeating-radial-gradient(
+        circle,
+        #111 0,
+        #111 2px,
+        #222 3px,
+        #111 4px
+      );
+    }
+
+    /* Corkboard Bulletin Board Background Effect */
+    .corkboard-bg {
+      background-color: #3b2313;
+      background-image: 
+        radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 0),
+        radial-gradient(rgba(0, 0, 0, 0.3) 1px, transparent 0);
+      background-size: 20px 20px, 15px 15px;
+      box-shadow: inset 0 0 80px rgba(0,0,0,0.8);
+    }
+
+    /* Push Pin Graphic Elements */
+    .push-pin {
+      position: absolute;
+      top: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 18px;
+      hight: 18px;
+      border-radius: 50%;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.4), inset -2px -2px 4px rgba(0,0,0,0.4);
+      z-index: 20;
+    }
+
+    /* Glassmorphism utility */
+    .glass-card {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+  </style>
+</head>
+
+<body id="app-body" class="h-full bg-slate-900 text-slate-100 flex flex-col font-sans transition-colors duration-300 min-h-screen selection:bg-pink-500 selection:text-white">
+
+  <!-- ================= TOP HEADER / NAVIGATION ================= -->
+  <header class="sticky top-0 z-40 bg-slate-950/90 backdrop-blur-md border-b border-slate-800 shadow-xl">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap justify-between items-center gap-4">
+      
+      <!-- Brand Logo Cutout -->
+      <a href="#home" onclick="navigateTo('home')" class="cursor-pointer group flex items-center gap-2">
+        <div id="brand-cutout" class="cutout-wrapper text-lg sm:text-2xl">
+          <!-- Populated by JS for magazine cutout letter styles -->
+        </div>
+      </a>
+
+      <!-- Navigation Links -->
+      <nav class="flex flex-wrap items-center gap-1 sm:gap-2 text-xs sm:text-sm font-semibold">
+        <button onclick="navigateTo('home')" id="nav-home" class="nav-btn px-3 py-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-200 transition flex items-center gap-1.5 border border-slate-700/50">
+          <i class="fa-solid fa-house text-pink-400"></i> <span>Home</span>
+        </button>
+        <button onclick="navigateTo('wall')" id="nav-wall" class="nav-btn px-3 py-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-200 transition flex items-center gap-1.5 border border-slate-700/50">
+          <i class="fa-solid fa-note-sticky text-amber-400"></i> <span>Freedom Wall</span>
+        </button>
+        <button onclick="navigateTo('audio')" id="nav-audio" class="nav-btn px-3 py-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-200 transition flex items-center gap-1.5 border border-slate-700/50">
+          <i class="fa-solid fa-compact-disc text-cyan-400"></i> <span>Listen to Someone</span>
+        </button>
+        <button onclick="navigateTo('about')" id="nav-about" class="nav-btn px-3 py-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-200 transition flex items-center gap-1.5 border border-slate-700/50">
+          <i class="fa-solid fa-feather-pointed text-purple-400"></i> <span>About</span>
+        </button>
+        <button onclick="navigateTo('services')" id="nav-services" class="nav-btn px-3 py-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-200 transition flex items-center gap-1.5 border border-slate-700/50">
+          <i class="fa-solid fa-cubes text-emerald-400"></i> <span>Services</span>
+        </button>
+        <button onclick="navigateTo('contact')" id="nav-contact" class="nav-btn px-3 py-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-200 transition flex items-center gap-1.5 border border-slate-700/50">
+          <i class="fa-solid fa-paper-plane text-blue-400"></i> <span>Contact</span>
+        </button>
+      </nav>
+
+      <!-- Action Buttons (Customize & Signature) -->
+      <div class="flex items-center gap-2">
+        <button onclick="openModal('customize-modal')" class="px-3 py-2 bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white font-bold text-xs sm:text-sm rounded-lg shadow-lg hover:shadow-pink-500/20 transition flex items-center gap-1.5 transform active:scale-95">
+          <i class="fa-solid fa-palette"></i>
+          <span class="hidden sm:inline">Customize</span>
+        </button>
+        <button onclick="openModal('signature-modal')" class="px-3 py-2 bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-500 hover:to-teal-500 text-white font-bold text-xs sm:text-sm rounded-lg shadow-lg hover:shadow-cyan-500/20 transition flex items-center gap-1.5 transform active:scale-95">
+          <i class="fa-solid fa-signature"></i>
+          <span class="hidden sm:inline">Sign Wall</span>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- ================= MAIN CONTENT WRAPPER ================= -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <!-- ---------------- SECTION: HOME ---------------- -->
+    <section id="sec-home" class="space-y-12 animate-fade-in">
+      
+      <!-- Hero Banner -->
+      <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-purple-950 p-8 sm:p-12 border border-slate-800 shadow-2xl">
+        <div class="absolute -right-20 -bottom-20 w-80 h-80 bg-pink-600/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -left-20 -top-20 w-80 h-80 bg-cyan-600/10 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="relative z-10 max-w-3xl space-y-6">
+          <div id="hero-title-cutout" class="cutout-wrapper text-3xl sm:text-5xl lg:text-6xl mb-2"></div>
+          
+          <p class="text-slate-300 text-lg sm:text-xl font-light leading-relaxed">
+            Unburden your mind, amplify your voice, and rediscover human warmth. A sanctuary where secret truths become shared solace.
+          </p>
+
+          <div class="flex flex-wrap gap-4 pt-4">
+            <button onclick="navigateTo('wall')" class="px-6 py-3.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-base shadow-lg shadow-amber-500/20 hover:scale-105 transition flex items-center gap-2">
+              <i class="fa-solid fa-edit"></i> Visit Freedom Wall
+            </button>
+            <button onclick="navigateTo('audio')" class="px-6 py-3.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-base shadow-lg shadow-cyan-500/20 hover:scale-105 transition flex items-center gap-2">
+              <i class="fa-solid fa-headphones"></i> Listen To Someone
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Access Hub Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        
+        <!-- Freedom Wall Feature Box -->
+        <div class="bg-slate-800/50 backdrop-blur-md rounded-2xl p-6 border border-slate-700/60 hover:border-amber-500/50 transition duration-300 flex flex-col justify-between group">
+          <div class="space-y-4">
+            <div class="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center text-2xl group-hover:scale-110 transition">
+              <i class="fa-solid fa-pen-nib"></i>
+            </div>
+            <h3 class="text-2xl font-bold text-white flex items-center gap-2">
+              The Freedom Wall
+            </h3>
+            <p class="text-slate-400 text-sm leading-relaxed">
+              Post anonymous thoughts, secrets, poem fragments, or memories pinned to our bulletin corkboard. Attach polaroids, read through others' confessions, and slide through endless pages.
+            </p>
+          </div>
+          <button onclick="navigateTo('wall')" class="mt-6 w-full py-2.5 rounded-lg bg-slate-700 hover:bg-amber-500 hover:text-slate-950 font-bold text-sm transition flex items-center justify-center gap-2">
+            Explore Confessions <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </div>
+
+        <!-- Audio Player Feature Box -->
+        <div class="bg-slate-800/50 backdrop-blur-md rounded-2xl p-6 border border-slate-700/60 hover:border-cyan-500/50 transition duration-300 flex flex-col justify-between group">
+          <div class="space-y-4">
+            <div class="w-12 h-12 rounded-xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center text-2xl group-hover:scale-110 transition">
+              <i class="fa-solid fa-compact-disc"></i>
+            </div>
+            <h3 class="text-2xl font-bold text-white flex items-center gap-2">
+              Audio Sanctuary
+            </h3>
+            <p class="text-slate-400 text-sm leading-relaxed">
+              Experience therapeutic ambient recordings on a spinning CD vinyl player. Record your own voice memo or upload soothing sounds, with options to delete or manage your tracks anytime.
+            </p>
+          </div>
+          <button onclick="navigateTo('audio')" class="mt-6 w-full py-2.5 rounded-lg bg-slate-700 hover:bg-cyan-500 hover:text-slate-950 font-bold text-sm transition flex items-center justify-center gap-2">
+            Play Recordings <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </div>
+
+        <!-- Signatures Feature Box -->
+        <div class="bg-slate-800/50 backdrop-blur-md rounded-2xl p-6 border border-slate-700/60 hover:border-pink-500/50 transition duration-300 flex flex-col justify-between group md:col-span-2 lg:col-span-1">
+          <div class="space-y-4">
+            <div class="w-12 h-12 rounded-xl bg-pink-500/10 text-pink-400 flex items-center justify-center text-2xl group-hover:scale-110 transition">
+              <i class="fa-solid fa-signature"></i>
+            </div>
+            <h3 class="text-2xl font-bold text-white flex items-center gap-2">
+              Signature Log
+            </h3>
+            <p class="text-slate-400 text-sm leading-relaxed">
+              Mark your presence! Type or hand-draw your alias on our community signature board. Leave a symbol that you passed through Freedom Arc today.
+            </p>
+          </div>
+          <button onclick="openModal('signature-modal')" class="mt-6 w-full py-2.5 rounded-lg bg-slate-700 hover:bg-pink-500 hover:text-slate-950 font-bold text-sm transition flex items-center justify-center gap-2">
+            Leave Your Mark <i class="fa-solid fa-pen-line"></i>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Recent Signatures Highlights -->
+      <div class="bg-slate-950/60 rounded-2xl p-6 border border-slate-800 space-y-4">
+        <div class="flex items-center justify-between">
+          <h4 class="text-lg font-bold text-slate-200 flex items-center gap-2">
+            <i class="fa-solid fa-users text-pink-400"></i> Recent Visitors & Signatures
+          </h4>
+          <button onclick="openModal('signature-modal')" class="text-xs text-pink-400 hover:underline">Add yours</button>
+        </div>
+        <div id="home-signatures-container" class="flex flex-wrap gap-3 min-h-[60px] items-center">
+          <!-- Rendered via JS -->
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ---------------- SECTION: FREEDOM WALL (BULLETIN CORKBOARD) ---------------- -->
+    <section id="sec-wall" class="hidden space-y-6">
+      
+      <!-- Top Actions Banner -->
+      <div class="bg-slate-800/60 rounded-2xl p-6 border border-slate-700 flex flex-col md:flex-row justify-between items-center gap-4 shadow-lg">
+        <div>
+          <div id="wall-title-cutout" class="cutout-wrapper text-2xl sm:text-4xl mb-2"></div>
+          <p class="text-slate-400 text-sm">Post confessions pinned onto our community bulletin corkboard, unburden your heart, or read gentle truths.</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-3">
+          <button onclick="openModal('confession-modal')" class="px-5 py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl shadow-lg transition flex items-center gap-2 transform active:scale-95">
+            <i class="fa-solid fa-thumbtack"></i> Pin New Confession
+          </button>
+        </div>
+      </div>
+
+      <!-- Confessions Corkboard Container -->
+      <div class="relative min-h-[520px] corkboard-bg p-6 sm:p-10 rounded-3xl border-8 border-amber-950 shadow-2xl overflow-hidden">
+        
+        <!-- Wooden Corkboard Texture Frame Accent -->
+        <div class="absolute inset-0 border-4 border-amber-900/60 rounded-2xl pointer-events-none"></div>
+
+        <!-- Grid Items / Pinned Notes -->
+        <div id="confessions-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 relative z-10">
+          <!-- Populated by JS -->
+        </div>
+
+        <!-- Empty State -->
+        <div id="confessions-empty" class="hidden text-center py-20 bg-amber-950/40 rounded-2xl border-2 border-dashed border-amber-700/60 backdrop-blur-sm">
+          <i class="fa-solid fa-thumbtack text-5xl text-amber-500/60 mb-3 block animate-bounce"></i>
+          <p class="text-amber-100 font-bold text-lg">The Bulletin Board is empty right now.</p>
+          <p class="text-amber-300/80 text-xs mt-1">Be the first to pin a note to the board.</p>
+          <button onclick="openModal('confession-modal')" class="mt-4 px-5 py-2.5 bg-amber-500 text-slate-950 rounded-xl text-xs font-black hover:bg-amber-400 transition shadow-lg">
+            Pin Confession
+          </button>
+        </div>
+      </div>
+
+      <!-- Slider / Pagination Bar -->
+      <div id="confession-pagination" class="flex justify-between items-center bg-slate-950/80 p-4 rounded-xl border border-slate-800">
+        <button id="prev-page-btn" onclick="changeConfessionPage(-1)" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg text-sm font-bold transition flex items-center gap-2">
+          <i class="fa-solid fa-chevron-left"></i> Previous Slide
+        </button>
+        <span id="page-indicator" class="text-slate-400 text-xs font-mono font-bold">
+          Page 1 of 1
+        </span>
+        <button id="next-page-btn" onclick="changeConfessionPage(1)" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg text-sm font-bold transition flex items-center gap-2">
+          Next Slide <i class="fa-solid fa-chevron-right"></i>
+        </button>
+      </div>
+
+    </section>
+
+    <!-- ---------------- SECTION: LISTEN TO SOMEONE (AUDIO PLAYER) ---------------- -->
+    <section id="sec-audio" class="hidden space-y-8">
+      
+      <!-- Audio Player Header -->
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <div id="audio-title-cutout" class="cutout-wrapper text-2xl sm:text-4xl mb-2"></div>
+          <p class="text-slate-400 text-sm">Experience voice notes, whispered comforting thoughts, and tranquil ambient CDs. Delete or manage your recordings anytime.</p>
+        </div>
+        <button onclick="openModal('recording-modal')" class="px-5 py-3 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black rounded-xl shadow-lg transition flex items-center gap-2 transform active:scale-95">
+          <i class="fa-solid fa-microphone"></i> Add Voice Recording
+        </button>
+      </div>
+
+      <!-- Main Audio Deck (Interactive Vinyl & Player Details) -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 bg-slate-950/80 rounded-3xl p-6 sm:p-8 border border-slate-800 shadow-2xl">
+        
+        <!-- Left: Animated Spinning Vinyl / CD -->
+        <div class="lg:col-span-5 flex flex-col items-center justify-center space-y-6">
+          <div class="relative w-64 h-64 sm:w-72 sm:h-72 flex items-center justify-center">
+            
+            <!-- Vinyl Outer Case Glow -->
+            <div id="cd-glow" class="absolute inset-0 rounded-full bg-cyan-500/20 blur-xl transition duration-500 opacity-0"></div>
+
+            <!-- Spinning Record -->
+            <div id="cd-disc" class="w-full h-full rounded-full vinyl-grooves border-8 border-slate-950 shadow-2xl relative flex items-center justify-center transition-transform duration-700">
+              
+              <!-- Rainbow Shine Layer -->
+              <div class="absolute inset-0 rounded-full bg-gradient-to-tr from-transparent via-white/10 to-transparent pointer-events-none"></div>
+
+              <!-- CD Center Label Art -->
+              <div id="cd-art" class="w-24 h-24 sm:w-28 sm:h-28 rounded-full border-4 border-slate-900 bg-cover bg-center shadow-inner relative flex items-center justify-center overflow-hidden" style="background-image: url('https://images.unsplash.com/photo-1518609878373-06d740f60d8b?auto=format&fit=crop&w=400&q=80');">
+                <div class="w-8 h-8 rounded-full bg-slate-950 border-2 border-slate-700"></div>
+              </div>
+            </div>
+
+            <!-- Turntable Stylus / Tonearm -->
+            <div id="tonearm" class="absolute -top-4 right-4 w-24 h-28 pointer-events-none transition-transform duration-500 origin-top-right transform rotate-[-25deg]">
+              <div class="w-3 h-3 rounded-full bg-slate-400 absolute top-0 right-0"></div>
+              <div class="w-1.5 h-20 bg-slate-400 absolute top-2 right-1 rounded"></div>
+              <div class="w-4 h-6 bg-slate-300 absolute bottom-4 right-0 rounded"></div>
+            </div>
+          </div>
+
+          <!-- Quick Controls Bar -->
+          <div class="flex items-center gap-6">
+            <button onclick="prevTrack()" class="w-10 h-10 rounded-full bg-slate-800 hover:bg-slate-700 text-white flex items-center justify-center transition">
+              <i class="fa-solid fa-backward-step"></i>
+            </button>
+            <button id="play-btn" onclick="togglePlayPause()" class="w-16 h-16 rounded-full bg-cyan-400 hover:bg-cyan-300 text-slate-950 text-2xl flex items-center justify-center font-bold shadow-lg shadow-cyan-500/30 transition transform active:scale-95">
+              <i id="play-icon" class="fa-solid fa-play ml-1"></i>
+            </button>
+            <button onclick="nextTrack()" class="w-10 h-10 rounded-full bg-slate-800 hover:bg-slate-700 text-white flex items-center justify-center transition">
+              <i class="fa-solid fa-forward-step"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Right: Audio Metadata & Display Card -->
+        <div class="lg:col-span-7 flex flex-col justify-between space-y-6">
+          
+          <div class="space-y-4">
+            <div class="flex justify-between items-start">
+              <div>
+                <span class="px-2.5 py-1 rounded-full text-xs font-mono font-bold bg-cyan-950 text-cyan-400 border border-cyan-800/50 uppercase tracking-widest">
+                  Now Playing
+                </span>
+                <h2 id="current-track-title" class="text-2xl sm:text-3xl font-bold text-white mt-2">
+                  Select a CD Track
+                </h2>
+                <p id="current-track-author" class="text-slate-400 text-sm font-medium">
+                  By Anonymous
+                </p>
+              </div>
+
+              <!-- Track Delete Button for Currently Selected Audio -->
+              <div id="track-manage-btns" class="flex gap-2">
+                <!-- JS populated -->
+              </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="space-y-1">
+              <input id="audio-progress" type="range" min="0" max="100" value="0" oninput="seekAudio(this.value)" class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400">
+              <div class="flex justify-between text-xs font-mono text-slate-400">
+                <span id="curr-time">00:00</span>
+                <span id="dur-time">00:00</span>
+              </div>
+            </div>
+
+            <!-- Attached Image or Note Display -->
+            <div id="track-attachment-container" class="bg-slate-900/90 rounded-2xl p-4 border border-slate-800 flex flex-col sm:flex-row gap-4 items-center">
+              <img id="track-attachment-img" src="" alt="Attached Photo" class="w-24 h-24 rounded-xl object-cover border border-slate-700 hidden">
+              <div class="flex-1 space-y-1">
+                <p class="text-xs font-mono text-cyan-400 uppercase font-bold">Attached Note</p>
+                <p id="track-attachment-note" class="text-slate-300 text-sm italic">
+                  "No note attached for this recording."
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Selector CD Dropdown Carousel -->
+          <div class="space-y-3">
+            <label class="text-xs font-bold text-slate-400 uppercase tracking-wider block">
+              <i class="fa-solid fa-list"></i> Community CD Tracklist
+            </label>
+            <div id="track-list" class="space-y-2 max-h-48 overflow-y-auto pr-2">
+              <!-- JS Populated list -->
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ---------------- SECTION: ABOUT ---------------- -->
+    <section id="sec-about" class="hidden space-y-8 max-w-4xl mx-auto">
+      <div class="bg-slate-950/80 rounded-3xl p-6 sm:p-12 border border-slate-800 shadow-2xl relative overflow-hidden space-y-8">
+        <div class="absolute -right-20 -top-20 w-64 h-64 bg-purple-600/10 rounded-full blur-3xl"></div>
+
+        <div id="about-title-cutout" class="cutout-wrapper text-2xl sm:text-4xl md:text-5xl mb-4 max-w-full"></div>
+
+        <div class="space-y-6 text-slate-300 leading-relaxed text-base sm:text-lg font-light">
+          <p class="first-letter:text-5xl first-letter:font-serif first-letter:text-amber-400 first-letter:float-left first-letter:mr-3">
+            A sanctuary for unburdened souls—a realm where your deepest thoughts, silent whispers, and rawest emotions take flight. FREEDOM ARC is built on the belief that expression is liberation.
+          </p>
+          <p>
+            Share your truth to encourage others, spark hope, and remind the world that life is a vibrant tapestry worth living. Whether through handwritten ink, lingering photographs, or quiet spoken audio notes, your presence here matters.
+          </p>
+          <blockquote class="p-4 border-l-4 border-amber-400 bg-amber-500/5 rounded-r-xl italic text-amber-200">
+            "In every unspoken confession, there is a bridge waiting to be built between two hearts that felt alone."
+          </blockquote>
+        </div>
+
+        <div class="pt-6 border-t border-slate-800 flex flex-wrap justify-between items-center text-sm text-slate-400">
+          <span>Created with passion for anonymous freedom.</span>
+          <span class="font-mono text-xs text-amber-400">Freedom Arc v2.0</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------------- SECTION: SERVICES ---------------- -->
+    <section id="sec-services" class="hidden space-y-8">
+      <div id="services-title-cutout" class="cutout-wrapper text-3xl sm:text-5xl mb-4"></div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        <div class="bg-slate-950/80 p-6 rounded-2xl border border-slate-800 space-y-3">
+          <div class="text-3xl text-amber-400"><i class="fa-solid fa-thumbtack"></i></div>
+          <h3 class="text-xl font-bold text-white">Bulletin Freedom Board</h3>
+          <p class="text-slate-400 text-sm leading-relaxed">
+            Post your confessions, raw poetry, or hidden feelings onto a realistic pinned corkboard. Attach photos in polaroid style to visually share your emotions.
+          </p>
+        </div>
+
+        <div class="bg-slate-950/80 p-6 rounded-2xl border border-slate-800 space-y-3">
+          <div class="text-3xl text-cyan-400"><i class="fa-solid fa-headphones"></i></div>
+          <h3 class="text-xl font-bold text-white">Voice & Audio Reflections</h3>
+          <p class="text-slate-400 text-sm leading-relaxed">
+            Record directly from your microphone or upload audio files. Listen on an interactive CD player with option to delete your recordings at any time.
+          </p>
+        </div>
+
+        <div class="bg-slate-950/80 p-6 rounded-2xl border border-slate-800 space-y-3">
+          <div class="text-3xl text-pink-400"><i class="fa-solid fa-sliders"></i></div>
+          <h3 class="text-xl font-bold text-white">Custom Sanctuary Themes</h3>
+          <p class="text-slate-400 text-sm leading-relaxed">
+            Design your visual experience. Choose from rich color presets or pick custom background colors and image wallpaper overlays.
+          </p>
+        </div>
+
+        <div class="bg-slate-950/80 p-6 rounded-2xl border border-slate-800 space-y-3">
+          <div class="text-3xl text-emerald-400"><i class="fa-solid fa-signature"></i></div>
+          <h3 class="text-xl font-bold text-white">Signature Wall</h3>
+          <p class="text-slate-400 text-sm leading-relaxed">
+            Type an alias or draw your personal tag using our digital canvas pad to leave your imprint on Freedom Arc.
+          </p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ---------------- SECTION: CONTACT US ---------------- -->
+    <section id="sec-contact" class="hidden space-y-8 max-w-4xl mx-auto">
+      <div id="contact-title-cutout" class="cutout-wrapper text-3xl sm:text-5xl mb-4"></div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        
+        <!-- Contact Info -->
+        <div class="bg-slate-950/80 p-8 rounded-3xl border border-slate-800 space-y-6">
+          <h3 class="text-2xl font-bold text-white">Reach Out To Us</h3>
+          <p class="text-slate-400 text-sm">
+            Have thoughts, feature suggestions, or feedback? We'd love to hear from you.
+          </p>
+
+          <div class="space-y-4 font-mono text-sm">
+            <div class="flex items-center gap-3 p-3 rounded-xl bg-slate-900 border border-slate-800">
+              <i class="fa-solid fa-envelope text-pink-400 text-lg"></i>
+              <div>
+                <p class="text-xs text-slate-500 uppercase">Email Address</p>
+                <a href="mailto:chrisjhonaladad4@gmail.com" class="text-slate-200 hover:text-pink-400 transition">
+                  chrisjhonaladad4@gmail.com
+                </a>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-3 p-3 rounded-xl bg-slate-900 border border-slate-800">
+              <i class="fa-solid fa-phone text-cyan-400 text-lg"></i>
+              <div>
+                <p class="text-xs text-slate-500 uppercase">Contact Number</p>
+                <a href="tel:09067464203" class="text-slate-200 hover:text-cyan-400 transition">
+                  09067464203
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Form -->
+        <form onsubmit="handleContactSubmit(event)" class="bg-slate-950/80 p-8 rounded-3xl border border-slate-800 space-y-4">
+          <h3 class="text-xl font-bold text-white">Send a Message</h3>
+          <div>
+            <label class="block text-xs font-mono text-slate-400 mb-1">YOUR NAME / ALIAS</label>
+            <input type="text" required placeholder="e.g. Wanderer" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-slate-200 text-sm focus:outline-none focus:border-cyan-400">
+          </div>
+          <div>
+            <label class="block text-xs font-mono text-slate-400 mb-1">MESSAGE</label>
+            <textarea rows="4" required placeholder="Type your message here..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-slate-200 text-sm focus:outline-none focus:border-cyan-400"></textarea>
+          </div>
+          <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-sm transition">
+            Send Message <i class="fa-solid fa-paper-plane ml-1"></i>
+          </button>
+        </form>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ================= MODALS ================= -->
+
+  <!-- 1. CONFESSION MODAL (CREATE / EDIT) -->
+  <div id="confession-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 w-full max-w-lg rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl relative max-h-[85vh] flex flex-col overflow-hidden">
+      
+      <!-- Fixed Header Bar inside Modal -->
+      <div class="flex justify-between items-center pr-6 shrink-0 border-b border-slate-800 pb-3">
+        <h3 id="confession-modal-title" class="text-2xl font-bold text-white">Pin a Confession</h3>
+        <button onclick="closeModal('confession-modal')" class="text-slate-400 hover:text-white text-xl">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Scrollable Form Body Container -->
+      <div class="overflow-y-auto pr-2 space-y-6 flex-1 custom-scroll">
+        
+        <!-- Community Guidelines Precaution Warning -->
+        <div class="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs leading-relaxed flex items-start gap-3">
+          <i class="fa-solid fa-heart-circle-check text-amber-400 text-base mt-0.5 shrink-0"></i>
+          <div>
+            <strong>Kindness & Respect Policy:</strong> Please remain respectful and kind. Do not write anything hateful, derogatory, or harmful toward anyone. Freedom Arc is meant to heal, encourage, and unburden—not to inflict pain.
+          </div>
+        </div>
+
+        <form id="confession-form" onsubmit="saveConfession(event)" class="space-y-4">
+          <input type="hidden" id="confession-id">
+          
+          <div>
+            <label class="block text-xs font-mono text-slate-400 mb-1">TITLE OR TOPIC</label>
+            <input type="text" id="confession-title" required placeholder="e.g. Midnight Whispers" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-slate-100 text-sm focus:outline-none focus:border-amber-400">
+          </div>
+
+          <div>
+            <div class="flex justify-between items-center mb-1">
+              <label class="block text-xs font-mono text-slate-400">CONFESSION BODY (SCROLLABLE)</label>
+              <span class="text-[10px] text-amber-400 font-mono"><i class="fa-solid fa-arrows-up-down"></i> Scrollable text area</span>
+            </div>
+            <textarea id="confession-body" rows="6" required placeholder="Write whatever is on your heart... Feel free to write a long story, thoughts, or poems. You can scroll inside here or scroll the modal page." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 text-sm focus:outline-none focus:border-amber-400 min-h-[140px] max-h-[300px] overflow-y-auto leading-relaxed"></textarea>
+          </div>
+
+          <div>
+            <label class="block text-xs font-mono text-slate-400 mb-1">STICKY NOTE COLOR</label>
+            <select id="confession-color" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-slate-100 text-sm focus:outline-none focus:border-amber-400">
+              <option value="yellow">Yellow Note</option>
+              <option value="pink">Pink Note</option>
+              <option value="cyan">Cyan Note</option>
+              <option value="green">Green Note</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-mono text-slate-400 mb-1">ALIAS / SIGNATURE (OPTIONAL)</label>
+            <input type="text" id="confession-author" placeholder="e.g. Soul #402" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-slate-100 text-sm focus:outline-none focus:border-amber-400">
+          </div>
+
+          <div>
+            <label class="block text-xs font-mono text-slate-400 mb-1">ATTACH PHOTO (URL or Upload)</label>
+            <input type="url" id="confession-image-url" placeholder="Paste image link https://..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-slate-100 text-sm focus:outline-none focus:border-amber-400 mb-2">
+            <input type="file" id="confession-image-file" accept="image/*" onchange="handleImageFileUpload(event, 'confession-image-url')" class="text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-slate-800 file:text-slate-300 hover:file:bg-slate-700 cursor-pointer">
+          </div>
+
+          <!-- Sticky Bottom Action Bar -->
+          <div class="sticky bottom-0 bg-slate-900/95 backdrop-blur-md pt-4 pb-1 border-t border-slate-800 flex justify-end gap-3 z-10">
+            <button type="button" onclick="closeModal('confession-modal')" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm font-bold transition">Cancel</button>
+            <button type="submit" class="px-6 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl text-sm font-black shadow-lg shadow-amber-500/20 transition transform active:scale-95">Pin to Wall</button>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. CUSTOMIZE INTERFACE MODAL -->
+  <div id="customize-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 w-full max-w-lg rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+      <button onclick="closeModal('customize-modal')" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <h3 class="text-2xl font-bold text-white flex items-center gap-2">
+        <i class="fa-solid fa-palette text-pink-400"></i> Customize Interface
+      </h3>
+
+      <!-- Light / Dark Mode Toggle -->
+      <div class="space-y-2">
+        <label class="block text-xs font-mono text-slate-400">THEME MODE</label>
+        <div class="grid grid-cols-2 gap-3 bg-slate-950 p-1.5 rounded-xl border border-slate-800">
+          <button id="mode-dark-btn" onclick="setMode('dark')" class="py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-2 bg-pink-600 text-white shadow">
+            <i class="fa-solid fa-moon"></i> Dark Mode
+          </button>
+          <button id="mode-light-btn" onclick="setMode('light')" class="py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-2 text-slate-400 hover:text-slate-200">
+            <i class="fa-solid fa-sun"></i> Light Mode
+          </button>
+        </div>
+      </div>
+
+      <!-- Presets -->
+      <div class="space-y-2">
+        <label class="block text-xs font-mono text-slate-400">THEME PRESETS</label>
+        <div class="grid grid-cols-2 gap-2">
+          <button onclick="applyPresetTheme('cyberpunk')" class="p-3 bg-slate-950 border border-pink-500/40 hover:border-pink-500 rounded-xl text-xs font-bold text-pink-400 text-left transition">
+            🌌 Cyberpunk Neon
+          </button>
+          <button onclick="applyPresetTheme('pastel')" class="p-3 bg-purple-950/60 border border-purple-400/40 hover:border-purple-400 rounded-xl text-xs font-bold text-purple-300 text-left transition">
+            🌸 Soft Lavender
+          </button>
+          <button onclick="applyPresetTheme('grunge')" class="p-3 bg-stone-900 border border-amber-600/40 hover:border-amber-600 rounded-xl text-xs font-bold text-amber-500 text-left transition">
+            🪵 Cork Grunge
+          </button>
+          <button onclick="applyPresetTheme('sunset')" class="p-3 bg-red-950/60 border border-orange-500/40 hover:border-orange-500 rounded-xl text-xs font-bold text-orange-400 text-left transition">
+            🌅 Sunset Warmth
+          </button>
+        </div>
+      </div>
+
+      <!-- Custom Options -->
+      <div class="space-y-4 pt-2 border-t border-slate-800">
+        <div>
+          <label class="block text-xs font-mono text-slate-400 mb-1">CUSTOM BACKGROUND COLOR</label>
+          <input type="color" id="picker-bg" class="w-full h-10 bg-slate-800 border border-slate-700 rounded-xl cursor-pointer p-1">
+        </div>
+
+        <div>
+          <label class="block text-xs font-mono text-slate-400 mb-1">BACKGROUND IMAGE OVERLAY (URL)</label>
+          <input type="url" id="bg-image-url" placeholder="https://..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-slate-100 text-sm focus:outline-none focus:border-pink-400">
+        </div>
+      </div>
+
+      <div class="flex justify-between items-center pt-4 border-t border-slate-800">
+        <button onclick="resetTheme()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold transition">
+          Reset Default
+        </button>
+        <div class="flex gap-2">
+          <button onclick="closeModal('customize-modal')" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs font-bold">Close</button>
+          <button onclick="applyCustomColors()" class="px-5 py-2 bg-pink-600 hover:bg-pink-500 text-white rounded-xl text-xs font-bold shadow-lg">Apply Custom</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. ADD VOICE RECORDING MODAL -->
+  <div id="recording-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 w-full max-w-lg rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+      <button onclick="closeModal('recording-modal')" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <h3 class="text-2xl font-bold text-white flex items-center gap-2">
+        <i class="fa-solid fa-microphone text-cyan-400"></i> Add Voice Recording
+      </h3>
+
+      <!-- Community Guidelines Warning -->
+      <div class="p-3.5 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-200 text-xs leading-relaxed flex items-start gap-3">
+        <i class="fa-solid fa-shield-halved text-cyan-400 text-base mt-0.5 shrink-0"></i>
+        <div>
+          <strong>Kindness & Respect Policy:</strong> Speak with kindness. Ensure your audio recording does not contain offensive language or hurtful speech.
+        </div>
+      </div>
+
+      <form id="recording-form" onsubmit="saveRecordingTrack(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-mono text-slate-400 mb-1">RECORDING TITLE</label>
+          <input type="text" id="recording-title" required placeholder="e.g. A Message for You" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-slate-100 text-sm focus:outline-none focus:border-cyan-400">
+        </div>
+
+        <div>
+          <label class="block text-xs font-mono text-slate-400 mb-1">ALIAS / AUTHOR (OPTIONAL)</label>
+          <input type="text" id="recording-author" placeholder="e.g. Wandering Voice" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-slate-100 text-sm focus:outline-none focus:border-cyan-400">
+        </div>
+
+        <!-- Live Record with Mic -->
+        <div class="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3 text-center">
+          <p class="text-xs font-mono text-slate-400">LIVE MICROPHONE RECORDER</p>
+          <div class="flex justify-center items-center gap-3">
+            <button type="button" onclick="toggleMicRecord()" class="px-5 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs flex items-center gap-2 transition shadow-lg shadow-cyan-500/20">
+              <i class="fa-solid fa-circle text-red-600 animate-pulse"></i>
+              <span id="mic-btn-text">Start Recording</span>
+            </button>
+          </div>
+          <p id="mic-status" class="text-[11px] text-slate-400 italic">Click to record directly using your microphone.</p>
+          <audio id="mic-preview" controls class="w-full mt-2 hidden"></audio>
+        </div>
+
+        <div class="text-center font-mono text-xs text-slate-500">- OR PROVIDE AUDIO URL / FILE -</div>
+
+        <div>
+          <label class="block text-xs font-mono text-slate-400 mb-1">AUDIO FILE URL OR UPLOAD</label>
+          <input type="url" id="recording-audio-url" placeholder="Paste audio link https://..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-slate-100 text-sm focus:outline-none focus:border-cyan-400 mb-2">
+          <input type="file" id="recording-audio-file" accept="audio/*" onchange="handleAudioFileUpload(event)" class="text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-slate-800 file:text-slate-300 hover:file:bg-slate-700 cursor-pointer">
+        </div>
+
+        <div>
+          <label class="block text-xs font-mono text-slate-400 mb-1">ATTACH NOTE / DEDICATION (OPTIONAL)</label>
+          <textarea id="recording-note" rows="2" placeholder="Write a short message or poem to go with your audio track..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-slate-100 text-sm focus:outline-none focus:border-cyan-400"></textarea>
+        </div>
+
+        <div>
+          <label class="block text-xs font-mono text-slate-400 mb-1">CD COVER ART IMAGE URL (OPTIONAL)</label>
+          <input type="url" id="recording-img-url" placeholder="https://..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-slate-100 text-sm focus:outline-none focus:border-cyan-400">
+        </div>
+
+        <div class="flex justify-end gap-3 pt-4 border-t border-slate-800">
+          <button type="button" onclick="closeModal('recording-modal')" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-sm font-bold">Cancel</button>
+          <button type="submit" class="px-6 py-2 bg-cyan-500 hover:bg-cyan-400 text-slate-950 rounded-xl text-sm font-black shadow-lg shadow-cyan-500/20">Save & Add CD Track</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 4. SIGNATURE WALL MODAL -->
+  <div id="signature-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 w-full max-w-lg rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl relative">
+      <button onclick="closeModal('signature-modal')" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <h3 class="text-2xl font-bold text-white flex items-center gap-2">
+        <i class="fa-solid fa-signature text-cyan-400"></i> Leave Your Signature
+      </h3>
+
+      <!-- Privacy Respect Warning -->
+      <div class="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs leading-relaxed flex items-start gap-3">
+        <i class="fa-solid fa-shield-halved text-amber-400 text-base mt-0.5"></i>
+        <div>
+          <strong>Optional & Respectful:</strong> You are completely free to leave an alias or signature, but never required or forced to do so. Your anonymity is always respected.
+        </div>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-mono text-slate-400 mb-1">TYPED ALIAS OR NAME</label>
+          <input type="text" id="signature-input" placeholder="e.g. StarGazer_99" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-slate-100 text-sm focus:outline-none focus:border-cyan-400">
+        </div>
+
+        <div>
+          <div class="flex justify-between items-center mb-1">
+            <label class="text-xs font-mono text-slate-400">OR DRAW YOUR SIGNATURE BELOW</label>
+            <button onclick="clearCanvas()" class="text-xs text-cyan-400 hover:underline">Clear Pad</button>
+          </div>
+          <canvas id="signature-canvas" width="400" height="150" class="w-full h-36 bg-slate-950 rounded-xl border border-slate-700 cursor-crosshair touch-none"></canvas>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-3 pt-2">
+        <button onclick="closeModal('signature-modal')" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-sm font-bold">Close</button>
+        <button onclick="saveSignature()" class="px-6 py-2 bg-cyan-500 hover:bg-cyan-400 text-slate-950 rounded-xl text-sm font-black">Sign Wall</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. IMAGE FULL VIEW MODAL -->
+  <div id="image-modal" class="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md hidden flex items-center justify-center p-4" onclick="closeModal('image-modal')">
+    <div class="max-w-3xl max-h-[90vh] relative">
+      <img id="image-modal-src" src="" alt="Full View" class="max-w-full max-h-[85vh] rounded-2xl object-contain shadow-2xl">
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="mt-auto border-t border-slate-800/80 bg-slate-950/80 py-6 text-center text-xs text-slate-500">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-2">
+      <p>© FREEDOM ARC — All rights reserved. Express without boundaries.</p>
+      <p class="font-mono">Contact: chrisjhonaladad4@gmail.com | 09067464203</p>
+    </div>
+  </footer>
+
+  <!-- Audio Element for Player -->
+  <audio id="main-audio-player" class="hidden"></audio>
+
+  <!-- ================= APPLICATION JAVASCRIPT ================= -->
+  <script>
+    /* ---------------- STORAGE & STATE ---------------- */
+    const STORAGE_KEY_CONFESSIONS = 'freedom_arc_confessions_v3';
+    const STORAGE_KEY_TRACKS = 'freedom_arc_tracks_v3';
+    const STORAGE_KEY_SIGNATURES = 'freedom_arc_signatures_v3';
+    const STORAGE_KEY_THEME = 'freedom_arc_theme_v3';
+
+    let currentMode = 'dark';
+
+    const defaultConfessions = [
+      {
+        id: '1',
+        title: 'Echoes of Midnight',
+        body: 'Sometimes I drive late at night just to listen to the rain hit the windshield and remind myself that the universe is still alive around me.',
+        author: 'Silent Voyager',
+        image: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=600&q=80',
+        noteColor: 'yellow',
+        likes: 12,
+        date: '2 hours ago'
+      },
+      {
+        id: '2',
+        title: 'Unsent Apology',
+        body: 'To my high school best friend: I am sorry we drifted apart. I still celebrate your victories from afar.',
+        author: 'Nostalgic Heart',
+        image: '',
+        noteColor: 'pink',
+        likes: 8,
+        date: '5 hours ago'
+      },
+      {
+        id: '3',
+        title: 'Learning to Breathe',
+        body: 'Quit my toxic job today. Terrified, but for the first time in three years, my chest doesn’t feel tight.',
+        author: 'Free Bird',
+        image: 'https://images.unsplash.com/photo-1470240731273-7821a6eeb6bd?auto=format&fit=crop&w=600&q=80',
+        noteColor: 'cyan',
+        likes: 24,
+        date: '1 day ago'
+      }
+    ];
+
+    // Default Audio CD Tracks
+    const defaultTracks = [
+      {
+        id: 't1',
+        title: 'Whispering Winds',
+        author: 'Ambient Calm',
+        audioUrl: 'https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=lofi-study-112191.mp3',
+        imageUrl: 'https://images.unsplash.com/photo-1518609878373-06d740f60d8b?auto=format&fit=crop&w=400&q=80',
+        note: 'Close your eyes and breathe slowly. You are doing better than you think.',
+        isCustom: false
+      },
+      {
+        id: 't2',
+        title: 'Midnight Rain Lofi',
+        author: 'Acoustic Soul',
+        audioUrl: 'https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a73467.mp3?filename=soft-rain-ambient-111154.mp3',
+        imageUrl: 'https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?auto=format&fit=crop&w=400&q=80',
+        note: 'Dedicated to anyone staying up late searching for peace.',
+        isCustom: false
+      }
+    ];
+
+    let confessions = JSON.parse(localStorage.getItem(STORAGE_KEY_CONFESSIONS)) || defaultConfessions;
+    let tracks = JSON.parse(localStorage.getItem(STORAGE_KEY_TRACKS)) || defaultTracks;
+    let signatures = JSON.parse(localStorage.getItem(STORAGE_KEY_SIGNATURES)) || ['Wanderer', 'Hopeful Soul', 'Luna'];
+
+    // Pagination State
+    let currentConfessionPage = 1;
+    const confessionsPerPage = 6;
+
+    // Audio State
+    let currentTrackIndex = 0;
+    let isPlaying = false;
+    const audioElement = document.getElementById('main-audio-player');
+
+    // Mic Recorder State
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let recordedAudioBlobUrl = '';
+
+    /* ---------------- MAGAZINE CUTOUT GENERATOR ---------------- */
+    function generateCutoutHTML(text) {
+      const fonts = ['font-sans', 'font-mono', 'font-marker', 'font-serif'];
+      const bgColors = [
+        'bg-pink-500 text-white',
+        'bg-yellow-400 text-black',
+        'bg-cyan-400 text-black',
+        'bg-purple-600 text-white',
+        'bg-emerald-400 text-black',
+        'bg-red-500 text-white',
+        'bg-amber-500 text-black'
+      ];
+
+      // Group by words so whole words wrap onto the next line together
+      const words = text.split(' ');
+      let globalIndex = 0;
+
+      return words.map(word => {
+        const letters = word.split('').map(char => {
+          const font = fonts[globalIndex % fonts.length];
+          const color = bgColors[(globalIndex * 3) % bgColors.length];
+          const rot = (globalIndex % 2 === 0 ? 1 : -1) * ((globalIndex % 4) + 1.5);
+          globalIndex++;
+
+          return `<span class="cutout-char ${font} ${color}" style="transform: rotate(${rot}deg);">${char}</span>`;
+        }).join('');
+
+        return `<span class="cutout-word">${letters}</span>`;
+      }).join('');
+    }
+
+    function initCutoutHeadings() {
+      document.getElementById('brand-cutout').innerHTML = generateCutoutHTML('FREEDOM ARC');
+      document.getElementById('hero-title-cutout').innerHTML = generateCutoutHTML('FREEDOM ARC');
+      document.getElementById('wall-title-cutout').innerHTML = generateCutoutHTML('FREEDOM WALL');
+      document.getElementById('audio-title-cutout').innerHTML = generateCutoutHTML('LISTEN TO SOMEONE');
+      document.getElementById('about-title-cutout').innerHTML = generateCutoutHTML('ABOUT FREEDOM ARC');
+      document.getElementById('services-title-cutout').innerHTML = generateCutoutHTML('OUR SERVICES');
+      document.getElementById('contact-title-cutout').innerHTML = generateCutoutHTML('CONTACT US');
+    }
+
+    /* ---------------- NAVIGATION ---------------- */
+    function navigateTo(sectionId) {
+      const sections = ['home', 'wall', 'audio', 'about', 'services', 'contact'];
+      sections.forEach(sec => {
+        const el = document.getElementById(`sec-${sec}`);
+        if (el) el.classList.add('hidden');
+      });
+
+      const target = document.getElementById(`sec-${sectionId}`);
+      if (target) target.classList.remove('hidden');
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    /* ---------------- MODALS MANAGEMENT ---------------- */
+    function openModal(id) {
+      document.getElementById(id).classList.remove('hidden');
+      if (id === 'signature-modal') initSignatureCanvas();
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.add('hidden');
+      if (id === 'recording-modal') stopMicRecord();
+    }
+
+    /* ---------------- CONFESSIONS BULLETIN BOARD SYSTEM ---------------- */
+    function renderConfessions() {
+      const container = document.getElementById('confessions-grid');
+      const emptyState = document.getElementById('confessions-empty');
+      container.innerHTML = '';
+
+      if (confessions.length === 0) {
+        emptyState.classList.remove('hidden');
+        document.getElementById('confession-pagination').classList.add('hidden');
+        return;
+      }
+
+      emptyState.classList.add('hidden');
+      document.getElementById('confession-pagination').classList.remove('hidden');
+
+      // Pagination Slice
+      const totalPages = Math.ceil(confessions.length / confessionsPerPage);
+      if (currentConfessionPage > totalPages) currentConfessionPage = totalPages;
+      if (currentConfessionPage < 1) currentConfessionPage = 1;
+
+      const startIdx = (currentConfessionPage - 1) * confessionsPerPage;
+      const endIdx = startIdx + confessionsPerPage;
+      const pageItems = confessions.slice(startIdx, endIdx);
+
+      // Color Palette Mapping for Sticky Notes
+      const noteColorClasses = {
+        yellow: 'bg-amber-100 text-amber-950 shadow-amber-950/40 border-amber-300',
+        pink: 'bg-pink-100 text-pink-950 shadow-pink-950/40 border-pink-300',
+        cyan: 'bg-cyan-100 text-cyan-950 shadow-cyan-950/40 border-cyan-300',
+        green: 'bg-emerald-100 text-emerald-950 shadow-emerald-950/40 border-emerald-300'
+      };
+
+      const pinColors = ['bg-red-500', 'bg-blue-500', 'bg-amber-500', 'bg-emerald-500', 'bg-purple-500'];
+
+      pageItems.forEach((item, index) => {
+        const card = document.createElement('div');
+        
+        // Random subtle rotation for pinned sticky note feel
+        const rotation = (index % 3 === 0 ? '-1.5deg' : index % 2 === 0 ? '2deg' : '-2.5deg');
+        const colorStyle = noteColorClasses[item.noteColor || 'yellow'] || noteColorClasses.yellow;
+        const pinColor = pinColors[index % pinColors.length];
+
+        card.className = `relative rounded-xl p-6 transition duration-300 flex flex-col justify-between shadow-2xl border ${colorStyle} group transform hover:scale-105 hover:z-30 hover:rotate-0`;
+        card.style.transform = `rotate(${rotation})`;
+
+        const imageHTML = item.image ? `
+          <div class="mt-4 p-2 bg-white rounded-md shadow-md cursor-pointer transform -rotate-1 border border-slate-200" onclick="viewFullImage('${item.image}')">
+            <div class="max-h-44 overflow-hidden rounded">
+              <img src="${item.image}" alt="Polaroid Attachment" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" onerror="this.style.display='none'">
+            </div>
+            <p class="text-[10px] text-slate-500 font-handwriting text-center mt-1">Photo Memory</p>
+          </div>
+        ` : '';
+
+        card.innerHTML = `
+          <!-- Colored Push Pin -->
+          <div class="push-pin ${pinColor}"></div>
+
+          <div class="space-y-3 pt-2">
+            <div class="flex justify-between items-start">
+              <h4 class="text-2xl font-handwriting font-bold leading-tight">${escapeHTML(item.title)}</h4>
+              <div class="flex items-center gap-1 bg-black/10 px-2 py-1 rounded-full backdrop-blur-sm">
+                <button onclick="editConfession('${item.id}')" class="text-slate-800 hover:text-blue-600 text-xs p-1" title="Edit">
+                  <i class="fa-solid fa-pen"></i>
+                </button>
+                <button onclick="deleteConfession('${item.id}')" class="text-slate-800 hover:text-red-600 text-xs p-1" title="Delete">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </div>
+            </div>
+
+            <p class="font-handwriting text-lg leading-snug whitespace-pre-line">${escapeHTML(item.body)}</p>
+            ${imageHTML}
+          </div>
+
+          <div class="mt-6 pt-3 border-t border-black/10 flex justify-between items-center text-xs font-handwriting text-slate-800 font-bold">
+            <span class="text-sm">~ ${escapeHTML(item.author || 'Anonymous')}</span>
+            <button onclick="likeConfession('${item.id}')" class="flex items-center gap-1.5 hover:scale-110 transition bg-white/60 px-2.5 py-1 rounded-full shadow-sm border border-black/5">
+              <i class="fa-solid fa-heart text-red-500"></i>
+              <span>${item.likes || 0}</span>
+            </button>
+          </div>
+        `;
+
+        container.appendChild(card);
+      });
+
+      // Update Pagination UI Controls
+      document.getElementById('page-indicator').innerText = `Page ${currentConfessionPage} of ${totalPages}`;
+      document.getElementById('prev-page-btn').disabled = currentConfessionPage === 1;
+      document.getElementById('next-page-btn').disabled = currentConfessionPage === totalPages;
+    }
+
+    function changeConfessionPage(delta) {
+      currentConfessionPage += delta;
+      renderConfessions();
+    }
+
+    function saveConfession(e) {
+      e.preventDefault();
+      const id = document.getElementById('confession-id').value;
+      const title = document.getElementById('confession-title').value.trim();
+      const body = document.getElementById('confession-body').value.trim();
+      const noteColor = document.getElementById('confession-color').value || 'yellow';
+      const author = document.getElementById('confession-author').value.trim() || 'Anonymous';
+      const image = document.getElementById('confession-image-url').value.trim();
+
+      if (id) {
+        // Edit existing
+        const index = confessions.findIndex(c => c.id === id);
+        if (index !== -1) {
+          confessions[index].title = title;
+          confessions[index].body = body;
+          confessions[index].noteColor = noteColor;
+          confessions[index].author = author;
+          confessions[index].image = image;
+        }
+      } else {
+        // Create new
+        const newConfession = {
+          id: Date.now().toString(),
+          title,
+          body,
+          noteColor,
+          author,
+          image,
+          likes: 0,
+          date: 'Just now'
+        };
+        confessions.unshift(newConfession);
+      }
+
+      localStorage.setItem(STORAGE_KEY_CONFESSIONS, JSON.stringify(confessions));
+      closeModal('confession-modal');
+      document.getElementById('confession-form').reset();
+      renderConfessions();
+    }
+
+    function editConfession(id) {
+      const item = confessions.find(c => c.id === id);
+      if (!item) return;
+
+      document.getElementById('confession-id').value = item.id;
+      document.getElementById('confession-title').value = item.title;
+      document.getElementById('confession-body').value = item.body;
+      document.getElementById('confession-color').value = item.noteColor || 'yellow';
+      document.getElementById('confession-author').value = item.author;
+      document.getElementById('confession-image-url').value = item.image;
+      document.getElementById('confession-modal-title').innerText = 'Edit Confession';
+
+      openModal('confession-modal');
+    }
+
+    function deleteConfession(id) {
+      confessions = confessions.filter(c => c.id !== id);
+      localStorage.setItem(STORAGE_KEY_CONFESSIONS, JSON.stringify(confessions));
+      renderConfessions();
+    }
+
+    function likeConfession(id) {
+      const item = confessions.find(c => c.id === id);
+      if (item) {
+        item.likes = (item.likes || 0) + 1;
+        localStorage.setItem(STORAGE_KEY_CONFESSIONS, JSON.stringify(confessions));
+        renderConfessions();
+      }
+    }
+
+    /* ---------------- LISTEN TO SOMEONE (AUDIO PLAYER & DELETE) ---------------- */
+    function renderTrackList() {
+      const container = document.getElementById('track-list');
+      container.innerHTML = '';
+
+      if (tracks.length === 0) {
+        container.innerHTML = `<p class="text-xs text-slate-500 italic p-2">No audio recordings available.</p>`;
+        updatePlayerDisplay();
+        return;
+      }
+
+      tracks.forEach((track, index) => {
+        const isSelected = index === currentTrackIndex;
+        const btn = document.createElement('div');
+        btn.className = `w-full p-3 rounded-xl transition flex items-center justify-between border ${
+          isSelected 
+            ? 'bg-cyan-500/20 border-cyan-400 text-white font-bold' 
+            : 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800'
+        }`;
+
+        btn.innerHTML = `
+          <div onclick="selectTrack(${index})" class="flex items-center gap-3 overflow-hidden flex-1 cursor-pointer">
+            <i class="fa-solid ${isSelected && isPlaying ? 'fa-disc-drive text-cyan-400 animate-spin' : 'fa-compact-disc text-slate-500'}"></i>
+            <div class="truncate">
+              <p class="text-xs truncate">${escapeHTML(track.title)}</p>
+              <p class="text-[10px] text-slate-400 truncate">by ${escapeHTML(track.author)}</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            ${track.isCustom ? `<span class="text-[10px] text-cyan-400 font-mono px-2 py-0.5 rounded bg-cyan-950 border border-cyan-800">User</span>` : ''}
+            <button onclick="deleteTrack('${track.id}')" class="text-xs p-1 text-slate-400 hover:text-red-400 transition" title="Delete Recording">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </div>
+        `;
+
+        container.appendChild(btn);
+      });
+
+      updatePlayerDisplay();
+    }
+
+    function selectTrack(index) {
+      if (index < 0 || index >= tracks.length) return;
+      currentTrackIndex = index;
+      const track = tracks[currentTrackIndex];
+      audioElement.src = track.audioUrl;
+      renderTrackList();
+      if (isPlaying) {
+        audioElement.play();
+      }
+    }
+
+    function togglePlayPause() {
+      if (tracks.length === 0) {
+        alert("No audio recordings available. Add one using the button above!");
+        return;
+      }
+
+      if (!audioElement.src) {
+        selectTrack(currentTrackIndex);
+      }
+
+      if (isPlaying) {
+        audioElement.pause();
+        isPlaying = false;
+      } else {
+        audioElement.play().then(() => {
+          isPlaying = true;
+        }).catch(err => {
+          console.log("Audio play error:", err);
+          alert("Audio stream source unavailable or blocked.");
+        });
+      }
+      updatePlayerDisplay();
+    }
+
+    function prevTrack() {
+      if (tracks.length === 0) return;
+      currentTrackIndex = (currentTrackIndex - 1 + tracks.length) % tracks.length;
+      selectTrack(currentTrackIndex);
+      if (isPlaying) audioElement.play();
+    }
+
+    function nextTrack() {
+      if (tracks.length === 0) return;
+      currentTrackIndex = (currentTrackIndex + 1) % tracks.length;
+      selectTrack(currentTrackIndex);
+      if (isPlaying) audioElement.play();
+    }
+
+    function updatePlayerDisplay() {
+      const track = tracks[currentTrackIndex];
+      const playIcon = document.getElementById('play-icon');
+      const cdDisc = document.getElementById('cd-disc');
+      const tonearm = document.getElementById('tonearm');
+      const cdGlow = document.getElementById('cd-glow');
+
+      if (track) {
+        document.getElementById('current-track-title').innerText = track.title;
+        document.getElementById('current-track-author').innerText = `By ${track.author || 'Anonymous'}`;
+        
+        if (track.imageUrl) {
+          document.getElementById('cd-art').style.backgroundImage = `url('${track.imageUrl}')`;
+        } else {
+          document.getElementById('cd-art').style.backgroundImage = `url('https://images.unsplash.com/photo-1518609878373-06d740f60d8b?auto=format&fit=crop&w=400&q=80')`;
+        }
+
+        // Attached Note & Image
+        const noteEl = document.getElementById('track-attachment-note');
+        const imgEl = document.getElementById('track-attachment-img');
+        noteEl.innerText = track.note ? `"${track.note}"` : "No note attached for this recording.";
+        
+        if (track.imageUrl) {
+          imgEl.src = track.imageUrl;
+          imgEl.classList.remove('hidden');
+        } else {
+          imgEl.classList.add('hidden');
+        }
+
+        // Always provide Delete Recording button for any selected track
+        const manageContainer = document.getElementById('track-manage-btns');
+        manageContainer.innerHTML = `
+          <button onclick="deleteTrack('${track.id}')" class="text-xs px-3 py-1.5 bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white rounded-lg transition font-bold flex items-center gap-1.5">
+            <i class="fa-solid fa-trash"></i> Delete Recording
+          </button>
+        `;
+      } else {
+        document.getElementById('current-track-title').innerText = 'No Track Selected';
+        document.getElementById('current-track-author').innerText = 'By Anonymous';
+        document.getElementById('track-manage-btns').innerHTML = '';
+      }
+
+      if (isPlaying) {
+        playIcon.className = 'fa-solid fa-pause';
+        cdDisc.classList.add('animate-spin-slow');
+        tonearm.style.transform = 'rotate(0deg)';
+        cdGlow.classList.remove('opacity-0');
+      } else {
+        playIcon.className = 'fa-solid fa-play ml-1';
+        cdDisc.classList.remove('animate-spin-slow');
+        tonearm.style.transform = 'rotate(-25deg)';
+        cdGlow.classList.add('opacity-0');
+      }
+    }
+
+    // Audio Player Event Listeners
+    audioElement.addEventListener('timeupdate', () => {
+      if (audioElement.duration) {
+        const prog = (audioElement.currentTime / audioElement.duration) * 100;
+        document.getElementById('audio-progress').value = prog;
+        document.getElementById('curr-time').innerText = formatTime(audioElement.currentTime);
+        document.getElementById('dur-time').innerText = formatTime(audioElement.duration);
+      }
+    });
+
+    audioElement.addEventListener('ended', () => {
+      nextTrack();
+    });
+
+    function seekAudio(val) {
+      if (audioElement.duration) {
+        audioElement.currentTime = (val / 100) * audioElement.duration;
+      }
+    }
+
+    function formatTime(secs) {
+      const m = Math.floor(secs / 60);
+      const s = Math.floor(secs % 60);
+      return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+    }
+
+    /* ---------------- MICROPHONE RECORDING ---------------- */
+    async function toggleMicRecord() {
+      const btnText = document.getElementById('mic-btn-text');
+      const statusText = document.getElementById('mic-status');
+
+      if (!mediaRecorder || mediaRecorder.state === 'inactive') {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          audioChunks = [];
+          mediaRecorder = new MediaRecorder(stream);
+
+          mediaRecorder.ondataavailable = event => {
+            audioChunks.push(event.data);
+          };
+
+          mediaRecorder.onstop = () => {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
+            recordedAudioBlobUrl = URL.createObjectURL(audioBlob);
+            const preview = document.getElementById('mic-preview');
+            preview.src = recordedAudioBlobUrl;
+            preview.classList.remove('hidden');
+            statusText.innerText = "Recording Saved!";
+          };
+
+          mediaRecorder.start();
+          btnText.innerText = 'Stop Recording';
+          statusText.innerText = 'Recording live...';
+        } catch (err) {
+          alert('Microphone access denied or unsupported browser.');
+        }
+      } else {
+        stopMicRecord();
+      }
+    }
+
+    function stopMicRecord() {
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+        document.getElementById('mic-btn-text').innerText = 'Start Recording';
+      }
+    }
+
+    function saveRecordingTrack(e) {
+      e.preventDefault();
+      const title = document.getElementById('recording-title').value.trim();
+      const author = document.getElementById('recording-author').value.trim() || 'Anonymous';
+      let audioUrl = document.getElementById('recording-audio-url').value.trim();
+      const note = document.getElementById('recording-note').value.trim();
+      const imageUrl = document.getElementById('recording-img-url').value.trim();
+
+      if (recordedAudioBlobUrl) {
+        audioUrl = recordedAudioBlobUrl;
+      }
+
+      if (!audioUrl) {
+        alert('Please record audio or provide an audio URL/file.');
+        return;
+      }
+
+      const newTrack = {
+        id: 't_' + Date.now(),
+        title,
+        author,
+        audioUrl,
+        imageUrl,
+        note,
+        isCustom: true
+      };
+
+      tracks.push(newTrack);
+      localStorage.setItem(STORAGE_KEY_TRACKS, JSON.stringify(tracks));
+      closeModal('recording-modal');
+      document.getElementById('recording-form').reset();
+      document.getElementById('mic-preview').classList.add('hidden');
+      recordedAudioBlobUrl = '';
+
+      currentTrackIndex = tracks.length - 1;
+      renderTrackList();
+      selectTrack(currentTrackIndex);
+    }
+
+    function deleteTrack(id) {
+      tracks = tracks.filter(t => t.id !== id);
+      localStorage.setItem(STORAGE_KEY_TRACKS, JSON.stringify(tracks));
+      if (currentTrackIndex >= tracks.length) {
+        currentTrackIndex = Math.max(0, tracks.length - 1);
+      }
+      renderTrackList();
+      if (tracks.length > 0) {
+        selectTrack(currentTrackIndex);
+      } else {
+        audioElement.src = '';
+        isPlaying = false;
+        updatePlayerDisplay();
+      }
+    }
+
+    /* ---------------- SIGNATURE CANVAS ---------------- */
+    let canvas, ctx, isDrawing = false;
+
+    function initSignatureCanvas() {
+      canvas = document.getElementById('signature-canvas');
+      if (!canvas) return;
+      ctx = canvas.getContext('2d');
+      ctx.strokeStyle = '#22d3ee';
+      ctx.lineWidth = 3;
+      ctx.lineCap = 'round';
+
+      canvas.onmousedown = (e) => { isDrawing = true; ctx.beginPath(); ctx.moveTo(e.offsetX, e.offsetY); };
+      canvas.onmousemove = (e) => { if (isDrawing) { ctx.lineTo(e.offsetX, e.offsetY); ctx.stroke(); } };
+      canvas.onmouseup = () => { isDrawing = false; };
+
+      // Touch support
+      canvas.addEventListener('touchstart', (e) => {
+        isDrawing = true;
+        const rect = canvas.getBoundingClientRect();
+        ctx.beginPath();
+        ctx.moveTo(e.touches[0].clientX - rect.left, e.touches[0].clientY - rect.top);
+      });
+      canvas.addEventListener('touchmove', (e) => {
+        if (isDrawing) {
+          const rect = canvas.getBoundingClientRect();
+          ctx.lineTo(e.touches[0].clientX - rect.left, e.touches[0].clientY - rect.top);
+          ctx.stroke();
+        }
+      });
+      canvas.addEventListener('touchend', () => { isDrawing = false; });
+    }
+
+    function clearCanvas() {
+      if (ctx && canvas) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    }
+
+    function saveSignature() {
+      const typed = document.getElementById('signature-input').value.trim();
+      if (typed) {
+        signatures.unshift(typed);
+      } else {
+        signatures.unshift('Anonymous Signer');
+      }
+
+      localStorage.setItem(STORAGE_KEY_SIGNATURES, JSON.stringify(signatures));
+      closeModal('signature-modal');
+      renderSignatures();
+      alert('Your signature has been added to Freedom Arc!');
+    }
+
+    function renderSignatures() {
+      const container = document.getElementById('home-signatures-container');
+      if (!container) return;
+      container.innerHTML = '';
+
+      signatures.slice(0, 12).forEach((sig) => {
+        const badge = document.createElement('span');
+        badge.className = 'px-3 py-1.5 rounded-full text-xs font-mono font-bold bg-slate-900 border border-slate-700 text-pink-300 shadow-sm flex items-center gap-1.5';
+        badge.innerHTML = `<i class="fa-solid fa-pen-nib text-pink-500 text-[10px]"></i> ${escapeHTML(sig)}`;
+        container.appendChild(badge);
+      });
+    }
+
+    /* ---------------- THEME & CUSTOMIZATION ---------------- */
+    function setMode(mode) {
+      currentMode = mode;
+      const body = document.getElementById('app-body');
+      const darkBtn = document.getElementById('mode-dark-btn');
+      const lightBtn = document.getElementById('mode-light-btn');
+
+      if (mode === 'light') {
+        body.classList.remove('bg-slate-900', 'text-slate-100');
+        body.classList.add('bg-slate-100', 'text-slate-900');
+        
+        darkBtn.className = "py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-2 text-slate-400 hover:text-slate-200";
+        lightBtn.className = "py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-2 bg-amber-500 text-slate-950 shadow";
+      } else {
+        body.classList.remove('bg-slate-100', 'text-slate-900');
+        body.classList.add('bg-slate-900', 'text-slate-100');
+
+        darkBtn.className = "py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-2 bg-pink-600 text-white shadow";
+        lightBtn.className = "py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-2 text-slate-400 hover:text-white";
+      }
+
+      saveThemeState({ mode: currentMode });
+    }
+
+    function applyPresetTheme(preset) {
+      const body = document.getElementById('app-body');
+      body.style.backgroundImage = 'none';
+
+      if (preset === 'cyberpunk') {
+        document.documentElement.style.setProperty('--bg-color', '#090d16');
+        body.className = "h-full bg-slate-950 text-pink-100 flex flex-col font-sans min-h-screen";
+      } else if (preset === 'pastel') {
+        document.documentElement.style.setProperty('--bg-color', '#1e1b2e');
+        body.className = "h-full bg-slate-900 text-purple-100 flex flex-col font-sans min-h-screen";
+      } else if (preset === 'grunge') {
+        body.className = "h-full bg-stone-950 text-stone-200 flex flex-col font-sans min-h-screen";
+      } else if (preset === 'sunset') {
+        body.className = "h-full bg-slate-950 text-amber-100 flex flex-col font-sans min-h-screen";
+      }
+      saveThemeState({ preset, mode: currentMode });
+    }
+
+    function applyCustomColors() {
+      const bg = document.getElementById('picker-bg').value;
+      const img = document.getElementById('bg-image-url').value.trim();
+      const body = document.getElementById('app-body');
+
+      if (bg) body.style.backgroundColor = bg;
+      if (img) body.style.backgroundImage = `url('${img}')`;
+
+      saveThemeState({ bg, img, mode: currentMode });
+    }
+
+    function resetTheme() {
+      const body = document.getElementById('app-body');
+      body.style.backgroundColor = '';
+      body.style.backgroundImage = '';
+      currentMode = 'dark';
+      setMode('dark');
+      localStorage.removeItem(STORAGE_KEY_THEME);
+    }
+
+    function saveThemeState(state) {
+      const existing = JSON.parse(localStorage.getItem(STORAGE_KEY_THEME)) || {};
+      localStorage.setItem(STORAGE_KEY_THEME, JSON.stringify({ ...existing, ...state }));
+    }
+
+    /* ---------------- FILE INPUT HELPERS ---------------- */
+    function handleImageFileUpload(e, targetId) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+          document.getElementById(targetId).value = evt.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function handleAudioFileUpload(e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+          recordedAudioBlobUrl = evt.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function viewFullImage(url) {
+      document.getElementById('image-modal-src').src = url;
+      openModal('image-modal');
+    }
+
+    function handleContactSubmit(e) {
+      e.preventDefault();
+      alert('Thank you for reaching out to FREEDOM ARC! Your message has been received.');
+      e.target.reset();
+    }
+
+    function escapeHTML(str) {
+      return (str || '').replace(/[&<>'"]/g, 
+        tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+      );
+    }
+
+    /* ---------------- INIT ON LOAD ---------------- */
+    window.onload = function() {
+      initCutoutHeadings();
+      renderConfessions();
+      renderTrackList();
+      renderSignatures();
+      if (tracks.length > 0) {
+        selectTrack(0);
+      }
+    };
+  </script>
+</body>
